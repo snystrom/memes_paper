@@ -3,7 +3,7 @@
 | Tool | Users 2019 | Approx yearly users |
 |:---:|:---:|:-----:|
 | MEME     | 36k  | 30k | (>14k runs / year)
-| MEME chip| 4k   | 30k | (>17k runs / year)
+| MEME chip| 4k   | 4-5k | (>17k runs / year)
 | MOMO     | 447  | ?? |
 | Centrimo | 2720 | ~2k |
 | DREME    | 3k   | 3k | (>8k runs / year)
