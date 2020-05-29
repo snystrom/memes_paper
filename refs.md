@@ -16,6 +16,14 @@
 
 Some helpful metrics: user job ratio, make the point that on average, users submit ~2.5 jobs or something.
 
+Rank: 
+1. MEME
+2. TomTom
+3. FIMO
+ - (Meme-Chip)
+4. Dreme
+5. AME
+
 [MEME-Suite Runtime info (alt)](http://alternate.meme-suite.org/opal2/dashboard?command=statistics&startDate=05%2F05%2F20&endDate=05%2F27%2F20&servicesName=AME&servicesName=DREME&servicesName=FIMO&servicesName=MEME&servicesName=TOMTOM)
 
 [MEME-Suite Runtime Info (main)](http://meme-suite.org/opal2/dashboard?command=statistics&startDate=05%2F05%2F20&endDate=05%2F27%2F20&servicesName=AME&servicesName=DREME&servicesName=FIMO&servicesName=TOMTOM)
