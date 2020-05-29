@@ -15,7 +15,7 @@ system_specs <- benchmarkme::get_cpu() %>%
 
 message("Preparing for Benchmarks")
 
-write.csv(system_specs, paste0(dir, "results_system_specs.csv"))
+write.csv(system_specs, paste0(dir, "results_system_specs.csv"), row.names = F)
 
 load(file = "test_sequences.rda")
 db <- "fly_factor_survey.meme"
@@ -41,6 +41,6 @@ tool_runtime <- list("dreme" = dreme_time,
 
 
 tool_runtime %>% 
-  write.table(file = paste0(dir, "results_runtime_info.csv"))
+  write.csv(file = paste0(dir, "results_runtime_info.csv"), row.names = FALSE)
 
 message("Completed Successfully")
