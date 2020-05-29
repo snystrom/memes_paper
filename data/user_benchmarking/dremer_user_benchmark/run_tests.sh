@@ -1,0 +1,1 @@
+Rscript --vanilla run_tests.R
