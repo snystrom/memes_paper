@@ -3,7 +3,11 @@ suppressPackageStartupMessages(library(dremeR))
 if (!dremeR:::meme_is_installed()) stop("dremeR cannot detect the MEME Suite")
 if (!require(benchmarkme)) install.packages("benchmarkme")
 
+dir <- "results/"
+dir.create(dir, showWarnings = FALSE)
+
 message("Collecting System Information")
+
 # https://www.kaggle.com/tobikaggle/check-ram-and-cpu-in-r
 system_specs <- benchmarkme::get_cpu() %>% 
   as.data.frame %>% 
@@ -18,8 +22,8 @@ db <- "fly_factor_survey.meme"
 
 dreme_res <- runDreme(test_sequences, "shuffle")
 
-message("Benchmarking runDreme")
-dreme_time <- microbenchmark::microbenchmark(runDreme(test_sequences, "shuffle"), times = 10)
+message("Benchmarking runDreme (This may take a while...)")
+dreme_time <- microbenchmark::microbenchmark(runDreme(test_sequences, "shuffle"), times = 5)
 
 message("Benchmarking runAme")
 ame_time <- microbenchmark::microbenchmark(runAme(test_sequences, "shuffle", database = db), times = 10)
@@ -35,8 +39,6 @@ tool_runtime <- list("dreme" = dreme_time,
                      ) %>% 
   dplyr::bind_rows(.id = "tool")
 
-dir <- "results/"
-dir.create(dir, showWarnings = FALSE)
 
 tool_runtime %>% 
   write.table(file = paste0(dir, "results_runtime_info.csv"))
