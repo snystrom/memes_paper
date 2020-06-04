@@ -1,0 +1,88 @@
+---
+title: "Outline"
+output: github_document
+---
+
+# Introduction
+  - MEME Suite is an excellent collection of tools for motif analysis
+  - MEME Suite Webserver serves thousands of users/year
+  - Problem: Manual uploads & configuration of each job makes iteration difficult
+  - Problem: occasionally long queue times
+  - Problem: Although data are returned in machine-readable format (.xml), there are few tools which can parse these data, requiring researchers to write their own solutions.
+	- Genomics requires high throughput
+  - Together, this can increase friction in integrating the MEME suite into an analysis workflow and may result in these powerful tools being underutilized during an analysis.
+  - We made {dremeR}, which integrates the most popular MEME suite tools with the bioconductor stack to allow simple, rapid development of motif analysis steps.
+		 - enables more iterations to identify best parameters
+		 - describe uses of new functionality & improvied efficiency (briefly)
+	- Also novel data visualization
+		 - There are currently limited ways to visualize MEME data, but by bringing data into R, opens up the strengths of R data viz.
+	** Couch some problems & soutiuons as novel develppments by this package**
+	- explicitly say not changing core functions of MEME 
+
+
+
+# Main Text
+  - A key design principle was to create tools that can be integrated in existing analysis pipelines, in addition to allowing users to create new ones.
+## Figure: flowchart of each step, getsequence-> run-> import -> visualize -> goto run
+## Overarching design principles/{dremeR} framework
+  - MEME utilities work with files on disk & outputs data to files on disk
+  - {dremeR} works by handling writing files from R object inputs, constructing the commandline calls, then reading in the data from the output files.
+      - by default, this is all done using temporary files, so the data is not permanently stored on disk.
+      - This is to shift the perspective from needing to save the files, to focusing on writing reproducible code which can regenerate the data when run.
+      - However, users can set the `outdir` argument to purposefully save the outputs to disk if needed.
+        - Also, if users use a 'fasta' file as input, the output data will be stored alongside the fasta file location
+  - For functions that use MEME commandline tools, they need the location of 'meme/bin/' on disk, we provide utilities for making this detection simple to reduce friction of using the tool.
+    - `check_meme_install` does user-friendly check that meme can be detected from R environment
+    - Environment variable `MEME_PATH` (set & forget), `options(meme_path)` (configure for each script), `meme_path` argument, for each function call
+  - Whenever possible, {dremeR} uses standard R data types for better integration with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this way, users don't need to learn new ways of working with data.
+
+## Core Utilities
+  - We built a common interface to each MEME utility. 
+    - Tools taking sequence inputs can use fasta files as input, or a Biostrings representation of sequences.
+    - Tools taking motif input can use .meme file path, universalmotif list, or the results object of functions returning motifs as output (allows seamless chaining of tools together)
+  - All commandline arguments can be passed to each function, if users mistype the function error handling will suggest typo fixes.
+  - `runDreme()`, `runMeme()` = Denovo motif discovery
+     - Can be slow
+  - `runAme()` = motif enrichment testing
+  - `runTomTom()` = motif comparison (often used for matching denovo motifs to known database)
+     - both ame & tomtom can use the `meme_db` setting which takes .meme path input, or universalmotif list.
+     - can set & forget default in .Renviron
+  - `runFimo()` if used with built-in helpers returns genomic coordinates of each motif in input sequences.
+     - integrates well with `plyranges` to facilitate range-based join operations to integrate peak-level metadata with motif information, vice-versa
+  - for dreme/ame/meme, we've paid special attention to enabling discriminative analysis
+     - users can easily perform multiple comparisons of condtion1 vs 2, etc.
+     - No special programming is required, no new patterns of data manipulation, etc. Just set input = list_of_sequences, control = "name(s) of entry in list" to compare all entries in list against that set of data (or pooled set if multiple entries).
+
+## Data Visualization
+  - `view_tomtom_hits` allows simple comparison of motifs w/ their matches, allowing users to quickly identify & use their domain-specific knowledge to decide if top hit is not "best" hit in context of experiment.
+    - Will display "No Match" if there's no hit
+    - can use the `force_best_match()` function to alter the best match info
+     - see motif data manipulation section for more details
+  - `ame_plot_heatmap` allows users to visualize patters of motif enrichment across multiple groups
+     - `scale_max` & method = "normalize" provide additional ways to view the data
+     - ame_compare_heatmap_methods helper gives users a way to select cutoffs & see tradeoffs of different visualizations, our package documentation (at <website> and in vignettes) go into great detail of how to reason about these differences.
+     - function is built in `ggplot2` which can be used to further customize the heatmap
+  - These plots can be exported as high-res SVGs for figures in papers
+
+## Motif Metadata manipulation
+  - Motif metadata is stored as a data.frame w/ special "motif" column holding the universalmotif object.
+  - the `update_motifs()` function uses the data.frame values to update the motif metadata
+    - allows users to manipulate motif metadata in bulk, then commit changes to motifs, which can be written to file using universalmotif `write_` functions, or used in plots, more {dremeR} functions, etc.
+    - facilitates manipulation of `MotifDb` metadata, or integrating database information with gene expression, to, for example, filter the search space to only expressed TFs. Code examples of this are described in package documentation.
+
+## Documentation & Tutorials
+ - {dremeR} website & vignettes contain detailed practical tutorials on how to perform comprehensive analysis of ChIP-seq data, query MotifDb to build a database of expressed TFs, and more.
+
+
+# Conclusion
+ - {dremeR} fits into a broader framework to enable deep analysis of motif content of sequence data.
+
+# Consider adding??
+## Most MEME Suite Tools can run fine on a laptop
+  - The webserver may give the appearance that lots of computational resources are needed for these tools,
+    this isn't really true for TomTom, AME, and Fimo. DREME & MEME Have reasonable runtimes under certain conditions, but can be resource heavy depending on the task.
+  - ? Provide data ?
+    - Idea would be to run a set of tests on a laptop w/ i5 processor and ~4-8GB RAM (Like a Macbook), 
+      and compare to a compute node w/ 16GB RAM, faster CPU. Just to show that you don't need a workhorse for it.
+
+
