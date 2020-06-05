@@ -11,7 +11,7 @@ output: github_document
   - Problem: Although data are returned in machine-readable format (.xml), there are few tools which can parse these data, requiring researchers to write their own solutions.
 	- Genomics requires high throughput
   - Together, this can increase friction in integrating the MEME suite into an analysis workflow and may result in these powerful tools being underutilized during an analysis.
-  - We made {dremeR}, which integrates the most popular MEME suite tools with the bioconductor stack to allow simple, rapid development of motif analysis steps.
+  - We made {memer}, which integrates the most popular MEME suite tools with the bioconductor stack to allow simple, rapid development of motif analysis steps.
 		 - enables more iterations to identify best parameters
 		 - describe uses of new functionality & improvied efficiency (briefly)
 	- Also novel data visualization
@@ -24,9 +24,9 @@ output: github_document
 # Main Text
   - A key design principle was to create tools that can be integrated in existing analysis pipelines, in addition to allowing users to create new ones.
 ## Figure: flowchart of each step, getsequence-> run-> import -> visualize -> goto run
-## Overarching design principles/{dremeR} framework
+## Overarching design principles/{memer} framework
   - MEME utilities work with files on disk & outputs data to files on disk
-  - {dremeR} works by handling writing files from R object inputs, constructing the commandline calls, then reading in the data from the output files.
+  - {memer} works by handling writing files from R object inputs, constructing the commandline calls, then reading in the data from the output files.
       - by default, this is all done using temporary files, so the data is not permanently stored on disk.
       - This is to shift the perspective from needing to save the files, to focusing on writing reproducible code which can regenerate the data when run.
       - However, users can set the `outdir` argument to purposefully save the outputs to disk if needed.
@@ -34,7 +34,7 @@ output: github_document
   - For functions that use MEME commandline tools, they need the location of 'meme/bin/' on disk, we provide utilities for making this detection simple to reduce friction of using the tool.
     - `check_meme_install` does user-friendly check that meme can be detected from R environment
     - Environment variable `MEME_PATH` (set & forget), `options(meme_path)` (configure for each script), `meme_path` argument, for each function call
-  - Whenever possible, {dremeR} uses standard R data types for better integration with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this way, users don't need to learn new ways of working with data.
+  - Whenever possible, {memer} uses standard R data types for better integration with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this way, users don't need to learn new ways of working with data.
 
 ## Core Utilities
   - We built a common interface to each MEME utility. 
@@ -67,15 +67,15 @@ output: github_document
 ## Motif Metadata manipulation
   - Motif metadata is stored as a data.frame w/ special "motif" column holding the universalmotif object.
   - the `update_motifs()` function uses the data.frame values to update the motif metadata
-    - allows users to manipulate motif metadata in bulk, then commit changes to motifs, which can be written to file using universalmotif `write_` functions, or used in plots, more {dremeR} functions, etc.
+    - allows users to manipulate motif metadata in bulk, then commit changes to motifs, which can be written to file using universalmotif `write_` functions, or used in plots, more {memer} functions, etc.
     - facilitates manipulation of `MotifDb` metadata, or integrating database information with gene expression, to, for example, filter the search space to only expressed TFs. Code examples of this are described in package documentation.
 
 ## Documentation & Tutorials
- - {dremeR} website & vignettes contain detailed practical tutorials on how to perform comprehensive analysis of ChIP-seq data, query MotifDb to build a database of expressed TFs, and more.
+ - {memer} website & vignettes contain detailed practical tutorials on how to perform comprehensive analysis of ChIP-seq data, query MotifDb to build a database of expressed TFs, and more.
 
 
 # Conclusion
- - {dremeR} fits into a broader framework to enable deep analysis of motif content of sequence data.
+ - {memer} fits into a broader framework to enable deep analysis of motif content of sequence data.
 
 # Consider adding??
 ## Most MEME Suite Tools can run fine on a laptop
