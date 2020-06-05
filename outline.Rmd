@@ -20,7 +20,6 @@ output: github_document
 	- explicitly say not changing core functions of MEME 
 
 
-
 # Main Text
   - A key design principle was to create tools that can be integrated in existing analysis pipelines, in addition to allowing users to create new ones.
 ## Figure: flowchart of each step, getsequence-> run-> import -> visualize -> goto run
@@ -73,6 +72,9 @@ output: github_document
 ## Documentation & Tutorials
  - {memer} website & vignettes contain detailed practical tutorials on how to perform comprehensive analysis of ChIP-seq data, query MotifDb to build a database of expressed TFs, and more.
 
+## Availability & Future Directions
+ - github (bioconductor?)
+ - Support additional MEME Suite tools & visualizations
 
 # Conclusion
  - {memer} fits into a broader framework to enable deep analysis of motif content of sequence data.
@@ -85,4 +87,7 @@ output: github_document
     - Idea would be to run a set of tests on a laptop w/ i5 processor and ~4-8GB RAM (Like a Macbook), 
       and compare to a compute node w/ 16GB RAM, faster CPU. Just to show that you don't need a workhorse for it.
 
+# Similar software papers:
+https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007654
 
+https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007664
