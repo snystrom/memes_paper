@@ -20,7 +20,8 @@ output: github_document
 	- explicitly say not changing core functions of MEME 
 
 
-# Main Text
+# Results 
+## Design & Implementation
   - A key design principle was to create tools that can be integrated in existing analysis pipelines, in addition to allowing users to create new ones.
 ## Figure: flowchart of each step, getsequence-> run-> import -> visualize -> goto run
 ## Overarching design principles/{memer} framework
@@ -33,7 +34,7 @@ output: github_document
   - For functions that use MEME commandline tools, they need the location of 'meme/bin/' on disk, we provide utilities for making this detection simple to reduce friction of using the tool.
     - `check_meme_install` does user-friendly check that meme can be detected from R environment
     - Environment variable `MEME_PATH` (set & forget), `options(meme_path)` (configure for each script), `meme_path` argument, for each function call
-  - Whenever possible, {memer} uses standard R data types for better integration with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this way, users don't need to learn new ways of working with data.
+  - Whenever possible, {memer} uses standard R data types for better integration with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this way, users don't need to learn new ways of working with data, and outputs can be integrated with other tools with limited effort.
 
 ## Core Utilities
   - We built a common interface to each MEME utility. 
@@ -86,6 +87,11 @@ output: github_document
   - ? Provide data ?
     - Idea would be to run a set of tests on a laptop w/ i5 processor and ~4-8GB RAM (Like a Macbook), 
       and compare to a compute node w/ 16GB RAM, faster CPU. Just to show that you don't need a workhorse for it.
+
+# Other issues:
+ - PWMEnrich (similar to AME) is now deprecated in bioconductor 3.12 (author request)
+ - MotIV (has TOMTom like function) is now deprecated in 3.12
+
 
 # Similar software papers:
 https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007654

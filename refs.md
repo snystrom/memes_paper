@@ -29,3 +29,6 @@ Rank:
 [MEME-Suite Runtime Info (main)](http://meme-suite.org/opal2/dashboard?command=statistics&startDate=05%2F05%2F20&endDate=05%2F27%2F20&servicesName=AME&servicesName=DREME&servicesName=FIMO&servicesName=TOMTOM)
 
 Runtime range is ~8min - 1hr (not sure if this includes wait time, would be nice to have that number)
+
+[MEME-Suite Citations](https://scholar.google.com.au/citations?user=4PFFWg0AAAAJ&hl=en)
+ - over 22k citations.
