@@ -1,0 +1,186 @@
+---
+title: "{memer}: an R interface to the MEME Suite"
+author: 
+ - name: Spencer L. Nystrom
+   ORCID: 
+ - name: Daniel J. McKay
+output: github_document
+---
+
+```{r setup}
+library(dremeR)
+```
+
+# Introduction
+
+The MEME Suite is a series of commandline tools which provide a variety of
+features for motif analysis such as *de-novo* motif discovery, motif enrichment
+testing, motif comparison, and motif matching, among others \cite{meme-suite}.
+MEME Suite tools take as input fasta files of sequences which will be searched
+for motifs, and if necessary, .meme format motif files containing motifs to use
+in the search. 
+
+# Results 
+## Design & Implementation
+
+The key underlying design principle of `memer` was to create tools that easily
+integrate into the existing suite of tools available in `Bioconductor` and the
+broader `R` package landscape. In this way, `memer` tools can be easily integrated
+into existing analysis pipelines, or used to create novel analyses. 
+
+MEME Suite tools are run on the commandline and use files stored on-disk as
+input while returning a series of output files which together compose the full
+results of the tool. While all tools produce machine-readable data formats, few
+options exist for parsing the full complement of these data into human readable
+format for use outside of the MEME Suite environment.
+
+MEME Suite are run on the commandline and take 
+as input fasta files of sequences
+which will be searched for motifs, and if necessary, .meme format motif files
+containing motifs to use in the search (REF: table of inputs). 
+
+The MEME Suite is a series of commandline tools which provide a variety of
+features for motif analysis such as *de-novo* motif discovery, motif enrichment
+testing, motif comparison, and motif matching, among others \cite{meme-suite}.
+MEME Suite tools take as input fasta files of sequences which will be searched
+for motifs, and if necessary, .meme format motif files containing motifs to use
+in the search. 
+
+At its most basic form, `memer` acts as a wrapper of these functions: users can
+point `memer` tools to files on disk, `memer` will construct the commandline
+call, output files will be saved on disk and imported into R for further analysis.
+However, `memer` is more than just a simple wrapper of the MEME Suite, it is an
+analysis framework allowing seamless integration of MEME Suite tools by
+providing an abstraction layer which handles file input/output (I/O) to allow
+inputs and outputs in the form of in-memory R objects. 
+
+When running a MEME Suite tool using `memer`, inputs are allowed in multiple
+formats providing the user additional flexibility when performing motif analysis
+(see "Core Utilities" for details). Of note, most outputs of `memer` tools can
+be used as inputs to other `memer` tools, allowing easy construction of
+"pipelines" (for example, discovering *de-novo* motifs with DREME, then finding
+the genomic positions of those motifs in target regions using FIMO).
+
+By shifting the focus from managing files on disk which may change infrequently to R data
+objects, this framework reinforces the requirement of writing reproducible
+analysis code to generate reproducible results.
+
+Whenever possible, `memer` uses standard R data types for better integration
+with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this
+way, users don't need to learn new ways of working with data, and outputs can
+be integrated with other tools with limited effort.
+
+
+### Detecting a local MEME Suite Install (remove this section?)
+ 
+`memer` requires the user to install the MEME Suite to the analysis environment
+in which `memer` will be used. The `check_meme_install()` function allows users
+to determine whether their R session is able to detect a local install of the
+MEME Suite.
+  - For functions that use MEME commandline tools, they need the location of 'meme/bin/' on disk, we provide utilities for making this detection simple to reduce friction of using the tool.
+    - `check_meme_install` does user-friendly check that meme can be detected from R environment
+    - Environment variable `MEME_PATH` (set & forget), `options(meme_path)` (configure for each script), `meme_path` argument, for each function call
+
+## Core Utilities
+We built a common interface to each MEME Suite tool. Tools requiring sequences
+as input can use either a path to a .fasta format file, a
+`Biostrings::XStringSet`, or `Biostrings::BStringSetList` as input. These data
+structures ensure support for all biological sequence types: DNA, RNA, and
+amino-acid. For the remainder of the text, we will focus our examples on DNA
+sequences, but `memer` tools support all sequence types. For DNA and RNA
+sequences, the `get_sequence()` utility acts as the entrypoint to analysis with
+`memer`. `get_sequence()` returns `Biostrings::XStringSet` or
+`Biostrings::BStringSetList` types from range-based data types such as
+`GenomicRanges` or `GenomicRangesList` which serve as sequence input to the
+`memer` core functions.
+
+Some `memer` tools require motifs as input. In these instances, `memer` will
+always accept a path to a .meme format file, or a list of motifs in
+`universalmotif` format \cite{universalmotif}. The `universalmotif` package
+provides simple import and motif conversion functions for all common motif data
+structures and file types. Using `universalmotif` objects ensures
+cross-compatability with all commonly used motif data formats, providing the
+user with maximum flexibility in their analysis. When `memer` functions return
+motifs, they are returned to the user in `universalmotif` format. This ensures
+that all `memer` motif outputs can be used as inputs to other `memer` functions
+that accept motif inputs. Furthermore, `universalmotif` conversion tools allow
+`memer` detected motifs to be used in many other popular Bioconductor motif
+packages, such as `TFBSTools` and `motifStack`.
+
+The core functionality of `memer` revolves around the interface to MEME Suite
+tools. Each supported MEME Suite tool is assigned a `runToolname()` function,
+which accepts inputs as described above and any valid commandline flags as
+function arguments. 
+
+```{bash, eval=F}
+# Shell command setting random seed to 100
+dreme -s 100 input.fasta
+```
+
+```{r, eval=F}
+# memer command setting random seed to 100
+runDreme(input_sequences, control = "shuffle", s = 100)
+```
+
+### Discriminative analysis
+```{r}
+sequences_list <- list("Static" = "seq",
+                       "Increasing" = "seq",
+                       "Decreasing" = "seq")
+
+# run Dreme on Static, Increasing, Decreasing sites using shuffled input as background
+runDreme(sequences_list, "shuffle")
+
+# run Dreme on Increasing, Decreasing sites using Static sites as background
+runDreme(sequences_list, "Static")
+
+# run Dreme on Decreasing sites using a combined set of Static + Increasing sites as background
+runDreme(sequences_list, c("Static", "Increasing"))
+```
+
+1. MEME & DREME
+ - get_sequences allows parsing genomic coordinates of match from MEME
+1. Tools like dreme/meme/ame that can do discriminative testing
+2. Tools like tomtom/fimo 
+
+### AME/MEME?
+ - `get_sequence` solves the problem of having different requirements for fasta format to use certain features
+  - score
+  - parse_genomic_coord
+
+
+ - and in some cases extends MEME Suite function to add additional features, such
+ as parsing the genomic coordinates of meme matches.
+ - also data visualization
+
+
+\begin{figure}
+\includegraphics[width=\textwidth]{figures/memer_model.png}
+\caption{A diagram of memer tools & workflows?
+flowchart of each step, getsequence-> run-> import -> visualize -> goto run
+
+Diagram how meme-suite tools work vs memer?
+}
+\label{fig:model} 
+\end{figure}
+
+
+  
+## Core Utilities
+  - All commandline arguments can be passed to each function, if users mistype the function error handling will suggest typo fixes.
+  - `runDreme()`, `runMeme()` = Denovo motif discovery
+     - Can be slow
+  - `runAme()` = motif enrichment testing
+  - `runTomTom()` = motif comparison (often used for matching denovo motifs to known database)
+     - both ame & tomtom can use the `meme_db` setting which takes .meme path input, or universalmotif list.
+     - can set & forget default in .Renviron
+  - `runFimo()` if used with built-in helpers returns genomic coordinates of each motif in input sequences.
+     - integrates well with `plyranges` to facilitate range-based join operations to integrate peak-level metadata with motif information, vice-versa
+  - for dreme/ame/meme, we've paid special attention to enabling discriminative analysis
+     - users can easily perform multiple comparisons of condtion1 vs 2, etc.
+     - No special programming is required, no new patterns of data manipulation, etc. Just set input = list_of_sequences, control = "name(s) of entry in list" to compare all entries in list against that set of data (or pooled set if multiple entries).
+
+  
+# Future developments:
+ - Additional meme suite tools
+ - better support for PSP generation
