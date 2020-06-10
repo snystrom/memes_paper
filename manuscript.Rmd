@@ -112,6 +112,7 @@ tools. Each supported MEME Suite tool is assigned a `runToolname()` function,
 which accepts inputs as described above and any valid commandline flags as
 function arguments. 
 
+Example of commandline flag as function input:
 ```{bash, eval=F}
 # Shell command setting random seed to 100
 dreme -s 100 input.fasta
@@ -119,10 +120,12 @@ dreme -s 100 input.fasta
 
 ```{r, eval=F}
 # memer command setting random seed to 100
+# user explicitly states they want to shuffle input sequences as control
 runDreme(input_sequences, control = "shuffle", s = 100)
 ```
 
 ### Discriminative analysis
+Care taken to enable a simple interface to create complex discriminative analysis designs
 ```{r}
 sequences_list <- list("Static" = "seq",
                        "Increasing" = "seq",
