@@ -97,3 +97,7 @@ output: github_document
 https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007654
 
 https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1007664
+
+cellProfiler paper:
+ - I like how this one is organized
+https://genomebiology.biomedcentral.com/articles/10.1186/gb-2006-7-10-r100#Sec2

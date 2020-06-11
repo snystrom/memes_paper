@@ -20,6 +20,12 @@ MEME Suite tools take as input fasta files of sequences which will be searched
 for motifs, and if necessary, .meme format motif files containing motifs to use
 in the search. 
 
+Data from MEME Suite tools can be underutilized because HTML interface?
+ - HTML is great human-readable reporting interface
+ - `memer` allows customized reporting.
+
+Bioconductor is deprecating PWMEnrich (~AME) and MotIV (~TomTom), `memer` can fill the gap and add additional value.
+
 # Results 
 ## Design & Implementation
 
@@ -192,3 +198,4 @@ Diagram how meme-suite tools work vs memer?
 # Future developments:
  - Additional meme suite tools
  - better support for PSP generation
+ - Better support for amino-acid sequence usage (please contact us with feature requests)
