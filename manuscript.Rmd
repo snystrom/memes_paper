@@ -31,8 +31,8 @@ Bioconductor is deprecating PWMEnrich (~AME) and MotIV (~TomTom), `memer` can fi
 
 The key underlying design principle of `memer` was to create tools that easily
 integrate into the existing suite of tools available in `Bioconductor` and the
-broader `R` package landscape. In this way, `memer` tools can be easily integrated
-into existing analysis pipelines, or used to create novel analyses. 
+broader `R` package landscape. In this way, `memer` tools can be used to extend
+existing analysis pipelines, or to create novel analyses.
 
 MEME Suite tools are run on the commandline and use files stored on-disk as
 input while returning a series of output files which together compose the full
@@ -66,6 +66,7 @@ formats providing the user additional flexibility when performing motif analysis
 be used as inputs to other `memer` tools, allowing easy construction of
 "pipelines" (for example, discovering *de-novo* motifs with DREME, then finding
 the genomic positions of those motifs in target regions using FIMO).
+ - unlike current MEME tools (ex tomtom -> FIMO is hard to do)
 
 By shifting the focus from managing files on disk which may change infrequently to R data
 objects, this framework reinforces the requirement of writing reproducible
@@ -95,23 +96,18 @@ tools. Each supported MEME Suite tool is assigned a `run` function
 accept sequence and motif inputs as needed and any valid commandline flags as
 additional function parameters.
 
+**Describe each tool briefly**
+
+**table of comparison to commandline software?**
+  - input type:
+  - output type:
+
 Tools requiring sequences as input can use a path to a .fasta format
 file, a `Biostrings::XStringSet`, or a `Biostrings::BStringSetList` as input.
 These data structures support all biological sequence types: DNA,
 RNA, and amino-acid. For the remainder of the text, we will 
 **use chip-seq data analysis as a framework to highlight memer features**
 \strikethrough{focus our examples on DNA sequences.}
-
-For DNA and RNA sequences, the `get_sequence()` utility acts
-as the entrypoint to analysis with `memer`. `get_sequence()` returns
-`Biostrings::XStringSet` or `Biostrings::BStringSetList` types from range-based
-data types such as `GenomicRanges` or `GenomicRangesList` to serve as
-sequence input to the `memer` core functions.
-
-When analyzing ChIP-seq data in R, transcription factor binding locations (ChIP
-Peaks) are commonly represented as `GenomicRanges` objects, which contain
-genomic positions of each peak, along with an arbitrary number of metadata
-columns describing features of each peak. 
 
 Some `memer` tools require motifs as input. In these instances, `memer` will
 always accept a path to a .meme format file, or a list of motifs in
@@ -124,6 +120,54 @@ can be used as inputs to other `memer` functions that accept motif inputs.
 Furthermore, `universalmotif` conversion tools allow `memer` detected motifs to
 be used in many other popular Bioconductor motif packages, such as `TFBSTools`
 and `motifStack`, providing the user with maximum flexibility in their analysis.
+
+When analyzing ChIP-seq data in R, transcription factor binding locations (ChIP
+Peaks) are commonly represented as `GenomicRanges` objects, which contain
+genomic positions of each peak, along with an arbitrary number of metadata
+columns describing features of each peak. 
+
+A key difference between `memer` and the MEME Suite tools is that `memer`
+provides tools allowing the peak-level metadata to frame subsequent analysis.
+For DNA ranges (such as in ChIP-seq), the `get_sequence()` utility acts as the
+entrypoint to analysis with `memer`. `get_sequence()` returns a `Biostrings`
+object containing the DNA sequence of each feature in the input ranges. If
+ranges are split into groups by a metadata value, `get_sequence()` will return a
+list of sequences for each group. When a sequence list is used as input into
+`memer` core functions, the function will run once for each group, enabling a
+native "split-apply-combine" workflow without any additional user overhead
+\cite{splitapplycombine, whickham}. Together, these features empower users to
+use range-based metadata as the centerpoint of their analyses.
+
+### Discriminative analysis
+A powerful feature of several MEME Suite Tools is the ability to perform
+discriminative analysis, where motifs are identified or tested for enrichement
+in one group of sequences relative to another. In many instances, running tools
+in discriminative mode on a set of control sequences outperforms simply using
+shuffled input sequences as the control (back this up, change wording?). Therefore, 
+enabling complex discriminative analysis designs was central to the design of `memer`.
+
+When using list input to `memer` tools, names of list object members can be
+passed to the `control` argument. This results in running the tool in
+discriminative mode using those sequences as the control sequences for all other
+list members. By passing multiple names to `control`, the sequences are
+combined together to create a merged background set.
+
+```{r}
+sequences_list <- list("Static" = "seq",
+                       "Increasing" = "seq",
+                       "Decreasing" = "seq")
+
+# run Dreme on Static, Increasing, Decreasing sites using shuffled input as background
+runDreme(sequences_list, "shuffle")
+
+# run Dreme on Increasing, Decreasing sites using Static sites as background
+runDreme(sequences_list, "Static")
+
+# run Dreme on Decreasing sites using a combined set of Static + Increasing sites as background
+runDreme(sequences_list, c("Static", "Increasing"))
+```
+
+
 
 **Example of commandline vs `memer`?**
 For example, to run DREME on the commandline on "input.fasta", while setting the random seed to 100:
@@ -141,42 +185,9 @@ runDreme("input.fasta", control = "shuffle", s = 100)
 
 **Somewhere say "memer can be used as a simple wrapper, but here we highlight its utility in chip-seq data analysis".**
 
-### Analysis using multiple groups (split-apply-combine approach)
-Users can adopt a "split-apply-combine" strategy for using `memer`. `GRanges`
-object acts as the centerpoint, can be split by data, fed to `get_sequence()`,
-then the list will run the tools for each group automatically.
-
-### Discriminative analysis
-A key feature of several MEME Suite Tools is the ability to perform
-discriminative analysis, where motifs are identified or tested for enrichement
-in one group of sequences relative to another. In many instances, running tools
-in discriminative mode on a set of control sequences outperforms simply using
-shuffled input sequences as the control (back this up, change wording?). Therefore, 
-enabling complex discriminative analysis designs was central to the design of `memer`.
-
-When using list input to `memer` tools, names of list object members can be
-passed to the `control` argument. This will result in running the tool in
-discriminative mode using those sequences as the control sequences for all other
-list members. By passing multiple names to `control`, the sequences will be
-combined together to create a background set.
-
-```{r}
-sequences_list <- list("Static" = "seq",
-                       "Increasing" = "seq",
-                       "Decreasing" = "seq")
-
-# run Dreme on Static, Increasing, Decreasing sites using shuffled input as background
-runDreme(sequences_list, "shuffle")
-
-# run Dreme on Increasing, Decreasing sites using Static sites as background
-runDreme(sequences_list, "Static")
-
-# run Dreme on Decreasing sites using a combined set of Static + Increasing sites as background
-runDreme(sequences_list, c("Static", "Increasing"))
-```
-
 ### Motif Comparison (TomTom)
  - takes runDreme/meme output as input -> pipes
+ - enables using best matched motif as input to other tools (unlike TomTom on commandline)
 
 ### Motif Matching (FIMO)
  - returns locations as GRanges
