@@ -135,16 +135,18 @@ ranges are split into groups by a metadata value, `get_sequence()` will return a
 list of sequences for each group. When a sequence list is used as input into
 `memer` core functions, the function will run once for each group, enabling a
 native "split-apply-combine" workflow without any additional user overhead
-\cite{splitapplycombine, whickham}. Together, these features empower users to
+\cite{splitapplycombine, wickham}. Together, these features empower users to
 use range-based metadata as the centerpoint of their analyses.
 
 ### Discriminative analysis
 A powerful feature of several MEME Suite Tools is the ability to perform
-discriminative analysis, where motifs are identified or tested for enrichement
+discriminative analysis, where motifs are identified or tested for enrichment
 in one group of sequences relative to another. In many instances, running tools
 in discriminative mode on a set of control sequences outperforms simply using
-shuffled input sequences as the control (back this up, change wording?). Therefore, 
-enabling complex discriminative analysis designs was central to the design of `memer`.
+shuffled input sequences as the control (back this up, change wording? maybe:
+using biologically relevant control sequences can improve quality of results?).
+Therefore, enabling complex discriminative analysis designs was central to the
+design of `memer`.
 
 When using list input to `memer` tools, names of list object members can be
 passed to the `control` argument. This results in running the tool in
@@ -166,6 +168,15 @@ runDreme(sequences_list, "Static")
 # run Dreme on Decreasing sites using a combined set of Static + Increasing sites as background
 runDreme(sequences_list, c("Static", "Increasing"))
 ```
+
+## Metadata manipulation
+ - `update_motifs()`
+ - `force_best_match()`
+
+## Data Visualization
+ - tomtom best match
+ - ame heatmaps by group
+
 
 
 
