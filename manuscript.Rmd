@@ -1,14 +1,15 @@
 ---
-title: "{memer}: an R interface to the MEME Suite"
-author: 
- - name: Spencer L. Nystrom
-   ORCID: 
- - name: Daniel J. McKay
-output: github_document
+title: '{memer}: an R interface to the MEME Suite'
+author:
+- ORCID: null
+  name: Spencer L. Nystrom
+- name: Daniel J. McKay
+output: word_document
 ---
 
 ```{r setup}
 library(dremeR)
+library(magrittr)
 ```
 
 # Introduction
@@ -64,7 +65,7 @@ When running a MEME Suite tool using `memer`, inputs are allowed in multiple
 formats providing the user additional flexibility when performing motif analysis
 (see "Core Utilities" for details). Of note, most outputs of `memer` tools can
 be used as inputs to other `memer` tools, allowing easy construction of
-"pipelines" (for example, discovering *de-novo* motifs with DREME, then finding
+pipelines (for example, discovering *de-novo* motifs with DREME, then finding
 the genomic positions of those motifs in target regions using FIMO).
  - unlike current MEME tools (ex tomtom -> FIMO is hard to do)
 
@@ -77,17 +78,6 @@ with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this
 way, users don't need to learn new ways of working with data, and outputs can
 be integrated with other tools with limited effort.
 
-
-### Detecting a local MEME Suite Install (remove this section?)
- 
-`memer` requires the user to install the MEME Suite to the analysis environment
-in which `memer` will be used. The `check_meme_install()` function allows users
-to determine whether their R session is able to detect a local install of the
-MEME Suite.
-  - For functions that use MEME commandline tools, they need the location of 'meme/bin/' on disk, we provide utilities for making this detection simple to reduce friction of using the tool.
-    - `check_meme_install` does user-friendly check that meme can be detected from R environment
-    - Environment variable `MEME_PATH` (set & forget), `options(meme_path)` (configure for each script), `meme_path` argument, for each function call
-
 ## Core Utilities
 
 The core functionality of `memer` revolves around the interface to MEME Suite
@@ -96,7 +86,8 @@ tools. Each supported MEME Suite tool is assigned a `run` function
 accept sequence and motif inputs as needed and any valid commandline flags as
 additional function parameters.
 
-**Describe each tool briefly**
+**Describe each tool briefly?**
+ - This could also be relegated to a table
 
 **table of comparison to commandline software?**
   - input type:
@@ -151,13 +142,18 @@ design of `memer`.
 When using list input to `memer` tools, names of list object members can be
 passed to the `control` argument. This results in running the tool in
 discriminative mode using those sequences as the control sequences for all other
-list members. By passing multiple names to `control`, the sequences are
-combined together to create a merged background set.
+list members. By passing multiple names to `control`, the sequences are combined
+together to create a merged background set. In this way, performing data-driven
+discriminative analysis is just as simple as one using shuffled sequences as
+background.
 
-```{r}
+```{r, eval=F}
+############
+# Replace this for a real set of peaks 
 sequences_list <- list("Static" = "seq",
                        "Increasing" = "seq",
                        "Decreasing" = "seq")
+############
 
 # run Dreme on Static, Increasing, Decreasing sites using shuffled input as background
 runDreme(sequences_list, "shuffle")
@@ -170,15 +166,109 @@ runDreme(sequences_list, c("Static", "Increasing"))
 ```
 
 ## Metadata manipulation
- - `update_motifs()`
- - `force_best_match()`
+`memer` is built on top of the `universalmotif` framework, which provides
+methods for importing motifs from various file formats into a unified R data
+representation complete with metadata information \cite{universalmotif}.
+However, a major limitation of the `universalmotif` framework is that 
+manipulating or filtering multiple `universalmotif` entries requires potentially
+unfamiliar overhead for less experienced users, acting as a barrier to
+performing potentially useful operations.
 
-## Data Visualization
- - tomtom best match
- - ame heatmaps by group
+The `as_universalmotif_dataframe()` function from `memer` converts
+`universalmotif` objects into a more familiar `data.frame` format which can be
+manipulated using `tidyverse` or base R tools. These data.frames also contain a
+special `motif` column which stores the `universalmotif` object of each entry.
+Users can update columns in the data.frame which will be reflected in the
+corresponding metadata entries of the `motif` by running `update_motifs()` after
+manipulating the columns. These data.frames can be converted back into
+`universalmotif` format using `as_universalmotif`, which also updates the
+metadata using column values. The results from running the core MEME Suite
+functions are stored in this format whenever appropriate, creating a consistent
+framework for users to explore and manipulate motifs and their associated data values.
 
+**This section is maybe too listy and could be fleshed out more / integrated above better**
+Examples of common manipulations to motif databases which are aided by this
+format include bulk renaming of entries, identification and removal of redundant
+entries, and exploratory analysis of motif databases.
 
+```{r}
+# Example of renaming motifs w/ universalmotif syntax
+library(universalmotif)
+m1 <- create_motif()
+m2 <- create_motif()
+my_motifs <- list(m1,m2)
 
+my_names <- c("motif one", "motif two")
+
+for (i in 1:length(my_motifs)) {
+  my_motifs[[i]]@name <- my_names[i]
+}
+
+# Example of renaming motifs w/ memer syntax
+my_motifs <- list(m1,m2)
+my_motifs %<>% 
+  as_universalmotif_dataframe() %>% 
+  dplyr::mutate(name = my_names) %>% 
+  as_universalmotif()
+```
+
+This data format also allows users to integrate external data sources into their
+analyses, for example, to filter a motif database to include only motifs for
+genes which are expressed in their tissue of interest. Using motif databases
+filtered in this way has been demonstrated in multiple contexts to provide
+higher quality results when searching for novel regulators based on motif
+content \cite{hector franco, eric olson, john stamm?, shep & greenleaf, klu worm
+paper}.
+
+## Data Visualization (section unfinished)
+
+The MEME Suite provides a limited set of data visualizations which have limited
+customizability. `memer` leverages the advantages of the R graphics environment
+to provide novel data visualizations which are infinitely customizable by the user.
+
+  - `view_tomtom_hits()` allows examination of tomtom results, allowing the user
+  to evaluate the quality of the assigned match.
+
+```{r}
+# Example comparison of view_tomtom_hits results
+plot_topHits <- example_tomtom %>% 
+  dplyr::mutate(name = "Example Motif (Has Matches)") %>% 
+  update_motifs() %>% 
+  view_tomtom_hits(2)
+
+plot_noMatch <- create_motif() %>% 
+  as_universalmotif_dataframe() %>% 
+  dplyr::mutate(name = "Example Motif (No Matches)") %>% 
+  update_motifs() %>% 
+  {
+    x <- .
+    x$tomtom <- list(NULL)
+    return(x)
+  } %>% 
+  view_tomtom_hits()
+
+cowplot::plot_grid(plotlist = list(plot_topHits[[1]], plot_noMatch[[1]]), ncol = 2, labels = "AUTO")
+```
+ 
+  - `ame_plot_heatmap()` allows comparison of AME results between multiple
+  groups. Heirarchical ordering of hits shows commonalities and differences in enrichment between groups.
+```{r}
+# AME Heatmap example plots
+example_ame$Decreasing %>% 
+  ame_plot_heatmap()
+
+example_ame %>% 
+  dplyr::bind_rows(.id = "id") %>% 
+  ame_plot_heatmap(group = id)
+```
+
+# Conclusion
+ - `memer` is cool
+ - use `memer`
+ - it's on github (provide link)
+ - manual is here:
+
+# Notes
 
 **Example of commandline vs `memer`?**
 For example, to run DREME on the commandline on "input.fasta", while setting the random seed to 100:
@@ -193,8 +283,6 @@ The `memer` implementation of the above command would be written as follows:
 # user explicitly states they want to shuffle input sequences as control
 runDreme("input.fasta", control = "shuffle", s = 100)
 ```
-
-**Somewhere say "memer can be used as a simple wrapper, but here we highlight its utility in chip-seq data analysis".**
 
 ### Motif Comparison (TomTom)
  - takes runDreme/meme output as input -> pipes
