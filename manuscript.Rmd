@@ -1,5 +1,5 @@
 ---
-title: '{memer}: an R interface to the MEME Suite'
+title: '{memes}: an R interface to the MEME Suite'
 author:
 - ORCID: null
   name: Spencer L. Nystrom
@@ -28,23 +28,23 @@ with no clear alternatives.
 
 The MEME Suite is a series of commandline tools which provide a variety of
 features for motif analysis including *de-novo* motif discovery, enrichment
-testing, comparison, and matching. Here we present `memer`, a motif analysis
+testing, comparison, and matching. Here we present `memes`, a motif analysis
 package which provides a seamless interface to MEME Suite tools within R.
 
-`memer` uses standard R and Bioconductor data types for better integration with
-common analysis tools like the `tidyverse` and `GRanges`. `memer` outputs also
-function as inputs to other `memer` commands, allowing simple construction of motif
+`memes` uses standard R and Bioconductor data types for better integration with
+common analysis tools like the `tidyverse` and `GRanges`. `memes` outputs also
+function as inputs to other `memes` commands, allowing simple construction of motif
 analysis pipelines.
 
-In addition to wrapping MEME Suite utilities, `memer` extends the functionality
+In addition to wrapping MEME Suite utilities, `memes` extends the functionality
 of `universalmotif` to provide base R and `tidyverse` compatible syntax for
 manipulating and analyzing motif metadata. These features allow motif databases
 to integrate external data to aid analysis, such as filtering a set of
-transcription factor motifs based on gene expression. `memer` also provides
+transcription factor motifs based on gene expression. `memes` also provides
 simple utilities for data visualization.
 
-`memer` is designed for maximum flexibility and ease of use to allow rapid
-iteration during analysis. Here we present several examples of how `memer`
+`memes` is designed for maximum flexibility and ease of use to allow rapid
+iteration during analysis. Here we present several examples of how `memes`
 allows novel analyses of ChIP and FAIRE-seq data by facilitating seamless
 interoperability between MEME Suite tools and the broader R landscape.
 
@@ -64,25 +64,25 @@ leaving a gap in functionality with no clear alternatives.
 
 The MEME Suite is a series of commandline tools which provide a variety of
 features for motif analysis such as *de-novo* motif discovery, enrichment
-testing,comparison, and matching. Here we present `memer`, a motif analysis
+testing,comparison, and matching. Here we present `memes`, a motif analysis
 package which provides a seamless interface to MEME Suite tools within R.
 
-`memer` uses base R and Bioconductor data types for better integration with
+`memes` uses base R and Bioconductor data types for better integration with
 common analysis tools like the `tidyverse` and other Bioconductor packages.
-Unlike the commandline implementation, `memer` outputs also function as inputs
+Unlike the commandline implementation, `memes` outputs also function as inputs
 to other MEME Suite tools, allowing simple construction of motif analysis
 pipelines.
 
-In addition to wrapping MEME Suite utilities, `memer` extends the functionality
+In addition to wrapping MEME Suite utilities, `memes` extends the functionality
 of `universalmotif` to provide base R and `tidyverse` compatible syntax for
 manipulating and analyzing motif metadata. These features allow motif databases
 to integrate external data to aid analysis, such as filtering a set of
 transcription factor motifs based on gene expression in the tissue
-of interest. `memer` also provides simple utilities for data visualization where
+of interest. `memes` also provides simple utilities for data visualization where
 appropriate.
 
-`memer` is designed for maximum flexibility and ease of use to allow users to
-iterate rapidly during analysis. Here we present several examples of how `memer`
+`memes` is designed for maximum flexibility and ease of use to allow users to
+iterate rapidly during analysis. Here we present several examples of how `memes`
 allows novel analyses of ChIP-seq and FAIRE-seq data by facilitating seamless
 interoperability between MEME Suite tools and the broader R package landscape.
 
@@ -99,16 +99,16 @@ in the search.
 
 Data from MEME Suite tools can be underutilized because HTML interface?
  - HTML is great human-readable reporting interface
- - `memer` allows customized reporting.
+ - `memes` allows customized reporting.
 
-Bioconductor is deprecating PWMEnrich (~AME) and MotIV (~TomTom), `memer` can fill the gap and add additional value.
+Bioconductor is deprecating PWMEnrich (~AME) and MotIV (~TomTom), `memes` can fill the gap and add additional value.
 
 # Results 
 ## Design & Implementation
 
-The key underlying design principle of `memer` was to create tools that easily
+The key underlying design principle of `memes` was to create tools that easily
 integrate into the existing suite of tools available in `Bioconductor` and the
-broader `R` package landscape. In this way, `memer` tools can be used to extend
+broader `R` package landscape. In this way, `memes` tools can be used to extend
 existing analysis pipelines, or to create novel analyses.
 
 MEME Suite tools are run on the commandline and use files stored on-disk as
@@ -129,18 +129,18 @@ MEME Suite tools take as input fasta files of sequences which will be searched
 for motifs, and if necessary, .meme format motif files containing motifs to use
 in the search. 
 
-At its most basic form, `memer` acts as a wrapper of these functions: users can
-point `memer` tools to files on disk, `memer` will construct the commandline
+At its most basic form, `memes` acts as a wrapper of these functions: users can
+point `memes` tools to files on disk, `memes` will construct the commandline
 call, output files will be saved on disk and imported into R for further analysis.
-However, `memer` is more than just a simple wrapper of the MEME Suite, it is an
+However, `memes` is more than just a simple wrapper of the MEME Suite, it is an
 analysis framework allowing seamless integration of MEME Suite tools by
 providing an abstraction layer which handles file input/output (I/O) to allow
 inputs and outputs in the form of in-memory R objects. 
 
-When running a MEME Suite tool using `memer`, inputs are allowed in multiple
+When running a MEME Suite tool using `memes`, inputs are allowed in multiple
 formats providing the user additional flexibility when performing motif analysis
-(see "Core Utilities" for details). Of note, most outputs of `memer` tools can
-be used as inputs to other `memer` tools, allowing easy construction of
+(see "Core Utilities" for details). Of note, most outputs of `memes` tools can
+be used as inputs to other `memes` tools, allowing easy construction of
 pipelines (for example, discovering *de-novo* motifs with DREME, then finding
 the genomic positions of those motifs in target regions using FIMO).
  - unlike current MEME tools (ex tomtom -> FIMO is hard to do)
@@ -149,14 +149,14 @@ By shifting the focus from managing files on disk which may change infrequently 
 objects, this framework reinforces the requirement of writing reproducible
 analysis code to generate reproducible results.
 
-Whenever possible, `memer` uses standard R data types for better integration
+Whenever possible, `memes` uses standard R data types for better integration
 with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this
 way, users don't need to learn new ways of working with data, and outputs can
 be integrated with other tools with limited effort.
 
 ## Core Utilities
 
-The core functionality of `memer` revolves around the interface to MEME Suite
+The core functionality of `memes` revolves around the interface to MEME Suite
 tools. Each supported MEME Suite tool is assigned a `run` function
 (`runDreme()`, `runMeme()`, `runAme()`, `runFimo()`, `runTomTom()`), which
 accept sequence and motif inputs as needed and any valid commandline flags as
@@ -173,18 +173,18 @@ Tools requiring sequences as input can use a path to a .fasta format
 file, a `Biostrings::XStringSet`, or a `Biostrings::BStringSetList` as input.
 These data structures support all biological sequence types: DNA,
 RNA, and amino-acid. For the remainder of the text, we will 
-**use chip-seq data analysis as a framework to highlight memer features**
+**use chip-seq data analysis as a framework to highlight memes features**
 \strikethrough{focus our examples on DNA sequences.}
 
-Some `memer` tools require motifs as input. In these instances, `memer` will
+Some `memes` tools require motifs as input. In these instances, `memes` will
 always accept a path to a .meme format file, or a list of motifs in
 `universalmotif` format \cite{universalmotif}. The `universalmotif` package
 provides simple import and motif conversion functions for all common motif data
 structures and file types, ensuring cross-compatability with all commonly used
-motif data formats. When `memer` functions return motifs, they are returned to
-the user in `universalmotif` format. This ensures that all `memer` motif outputs
-can be used as inputs to other `memer` functions that accept motif inputs.
-Furthermore, `universalmotif` conversion tools allow `memer` detected motifs to
+motif data formats. When `memes` functions return motifs, they are returned to
+the user in `universalmotif` format. This ensures that all `memes` motif outputs
+can be used as inputs to other `memes` functions that accept motif inputs.
+Furthermore, `universalmotif` conversion tools allow `memes` detected motifs to
 be used in many other popular Bioconductor motif packages, such as `TFBSTools`
 and `motifStack`, providing the user with maximum flexibility in their analysis.
 
@@ -193,14 +193,14 @@ Peaks) are commonly represented as `GenomicRanges` objects, which contain
 genomic positions of each peak, along with an arbitrary number of metadata
 columns describing features of each peak. 
 
-A key difference between `memer` and the MEME Suite tools is that `memer`
+A key difference between `memes` and the MEME Suite tools is that `memes`
 provides tools allowing the peak-level metadata to frame subsequent analysis.
 For DNA ranges (such as in ChIP-seq), the `get_sequence()` utility acts as the
-entrypoint to analysis with `memer`. `get_sequence()` returns a `Biostrings`
+entrypoint to analysis with `memes`. `get_sequence()` returns a `Biostrings`
 object containing the DNA sequence of each feature in the input ranges. If
 ranges are split into groups by a metadata value, `get_sequence()` will return a
 list of sequences for each group. When a sequence list is used as input into
-`memer` core functions, the function will run once for each group, enabling a
+`memes` core functions, the function will run once for each group, enabling a
 native "split-apply-combine" workflow without any additional user overhead
 \cite{splitapplycombine, wickham}. Together, these features empower users to
 use range-based metadata as the centerpoint of their analyses.
@@ -213,9 +213,9 @@ in discriminative mode on a set of control sequences outperforms simply using
 shuffled input sequences as the control (back this up, change wording? maybe:
 using biologically relevant control sequences can improve quality of results?).
 Therefore, enabling complex discriminative analysis designs was central to the
-design of `memer`.
+design of `memes`.
 
-When using list input to `memer` tools, names of list object members can be
+When using list input to `memes` tools, names of list object members can be
 passed to the `control` argument. This results in running the tool in
 discriminative mode using those sequences as the control sequences for all other
 list members. By passing multiple names to `control`, the sequences are combined
@@ -242,7 +242,7 @@ runDreme(sequences_list, c("Static", "Increasing"))
 ```
 
 ## Metadata manipulation
-`memer` is built on top of the `universalmotif` framework, which provides
+`memes` is built on top of the `universalmotif` framework, which provides
 methods for importing motifs from various file formats into a unified R data
 representation complete with metadata information \cite{universalmotif}.
 However, a major limitation of the `universalmotif` framework is that 
@@ -250,7 +250,7 @@ manipulating or filtering multiple `universalmotif` entries requires potentially
 unfamiliar overhead for less experienced users, acting as a barrier to
 performing potentially useful operations.
 
-The `as_universalmotif_dataframe()` function from `memer` converts
+The `as_universalmotif_dataframe()` function from `memes` converts
 `universalmotif` objects into a more familiar `data.frame` format which can be
 manipulated using `tidyverse` or base R tools. These data.frames also contain a
 special `motif` column which stores the `universalmotif` object of each entry.
@@ -280,7 +280,7 @@ for (i in 1:length(my_motifs)) {
   my_motifs[[i]]@name <- my_names[i]
 }
 
-# Example of renaming motifs w/ memer syntax
+# Example of renaming motifs w/ memes syntax
 my_motifs <- list(m1,m2)
 my_motifs %<>% 
   as_universalmotif_dataframe() %>% 
@@ -299,7 +299,7 @@ paper}.
 ## Data Visualization (section unfinished)
 
 The MEME Suite provides a limited set of data visualizations which have limited
-customizability. `memer` leverages the advantages of the R graphics environment
+customizability. `memes` leverages the advantages of the R graphics environment
 to provide novel data visualizations which are infinitely customizable by the user.
 
   - `view_tomtom_hits()` allows examination of tomtom results, allowing the user
@@ -339,23 +339,23 @@ example_ame %>%
 ```
 
 # Conclusion
- - `memer` is cool
- - use `memer`
+ - `memes` is cool
+ - use `memes`
  - it's on github (provide link)
  - manual is here:
 
 # Notes
 
-**Example of commandline vs `memer`?**
+**Example of commandline vs `memes`?**
 For example, to run DREME on the commandline on "input.fasta", while setting the random seed to 100:
 ```{bash, eval=F}
 # Shell command setting random seed to 100
 dreme -s 100 input.fasta
 ```
 
-The `memer` implementation of the above command would be written as follows:
+The `memes` implementation of the above command would be written as follows:
 ```{r, eval=F}
-# memer command setting random seed to 100
+# memes command setting random seed to 100
 # user explicitly states they want to shuffle input sequences as control
 runDreme("input.fasta", control = "shuffle", s = 100)
 ```
@@ -370,11 +370,11 @@ runDreme("input.fasta", control = "shuffle", s = 100)
  
 
 \begin{figure}
-\includegraphics[width=\textwidth]{figures/memer_model.png}
-\caption{A diagram of memer tools & workflows?
+\includegraphics[width=\textwidth]{figures/memes_model.png}
+\caption{A diagram of memes tools & workflows?
 flowchart of each step, getsequence-> run-> import -> visualize -> goto run
 
-Diagram how meme-suite tools work vs memer?
+Diagram how meme-suite tools work vs memes?
 }
 \label{fig:model} 
 \end{figure}
