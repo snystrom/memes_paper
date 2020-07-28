@@ -103,9 +103,152 @@ Data from MEME Suite tools can be underutilized because HTML interface?
 
 Bioconductor is deprecating PWMEnrich (~AME) and MotIV (~TomTom), `memes` can fill the gap and add additional value.
 
+
+
+
+Biopolymers, such as DNA and protein, perform varying functions based on their
+primary sequence. Short, repeated sequences, or "motifs" represent functional
+units within biopolymers which can act as interaction surfaces, create
+structure, or have enzymatic activity. Identification of shared motifs across
+multiple sequences can provide evidence for shared function, thus the ability to
+identify, classify, and compare motifs represents a key step in the analysis of
+biological sequences. Although tools that implement these features have
+historically existed in the Bioconductor landscape, they often rely on
+proprietary data types with poor interoperability with other tools. Furthermore,
+several of these packages will be deprecated in the next Bioconductor release,
+leaving a gap in functionality with no clear alternatives.
+
+The MEME Suite is a series of commandline and web-based tools which provide a variety
+of features for motif analysis such as *de-novo* motif discovery, enrichment
+testing, comparison, and matching \cite{meme-suite}. The MEME Suite is a widely
+accepted set of tools with over 22,000 citations to date, and over 30,000 unique
+users of the webserver implementation annually \cite{meme-usage-report-page,
+google-scholar-meme}. 
+
+The MEME Suite family of tools provides a
+comprehensive set of utilities to interrogate motif content across a broad range
+of biological contexts. However, several factors limit the full potential of
+these tools for use in data analysis. 
+  1) must do significant preprocessing to get data in correct input format
+  2) Easily parseable output data often doesn't contain all information
+    - ex tomtom alternative hits in .tsv output only present in IUPAC format, not matrix
+      - matrix is present in XML file, but no tools exist to parse this
+  3) limited data visualization capabilities 
+
+Here we present `memes`, a motif analysis package which provides a seamless
+interface to MEME Suite tools within R. `memes` uses base R and Bioconductor
+data types for data input and output, facilitating better integration with
+common analysis tools like the `tidyverse` and other Bioconductor packages.
+Unlike the commandline implementation, `memes` outputs also function as inputs
+to other MEME Suite tools, allowing simple construction of motif analysis
+pipelines without additional data processing steps. Additionally, R/Bioconductor data
+structures provide a full-featured representaiton of MEME Suite output data, providing
+users quick access to all relevant data structures with simple syntax. 
+
+In addition to wrapping MEME Suite utilities, `memes` extends the functionality
+of `universalmotif` to provide base R and `tidyverse` compatible syntax for
+manipulating and analyzing motif metadata. These features allow motif databases
+to integrate external data to aid analysis, such as filtering a set of
+transcription factor motifs based on gene expression in the tissue of interest.
+
+`memes` also provides simple utilities for data visualization where appropriate.
+Providing R representations of MEME Suite data objects enables generation of
+novel data visualizations using the well established tools available in the R
+landscape. Therefore, `memes` empowers users to deeply analyze and visualize
+motif analysis data.
+
+`memes` is designed for maximum flexibility and ease of use to allow users to
+iterate rapidly during analysis. Here we present several examples of how `memes`
+allows novel analyses of ChIP-seq and FAIRE-seq data by facilitating seamless
+interoperability between MEME Suite tools and the broader R package landscape.
+
 # Results 
 ## Design & Implementation
 
+### Datatypes
+
+
+MEME Suite tools are run on the commandline and use files stored on-disk as
+input while returning a series of output files containing varying data types.
+`memes` reduces each MEME Suite tool to an R function which internally handles
+file I/O such that all MEME Suite calling functions accept R objects as input,
+and return R objects as output. Sequence inputs are stored in `BioStrings`
+format, an R/Bioconductor package for storing biopolymer sequence data. Motif
+inputs are passed as `universalmotif` objects, another R/Bioconductor package
+for representing motif matrices and their associated metadata. `memes` will also
+always accept paths to files on disk, such as fasta files for sequence inputs,
+and meme format files for motif inputs.
+
+The MEME Suite tools do not return consistent data structures across tools. For
+example, the tool TomTom, which compares query motifs to a database of known
+motifs, returns tab-separated results which do not contain the frequency matrix
+representations of the matched motifs. Instead, users must parse these matrices
+back out from the input databases, creating additional friction for creating
+novel data visualizations and exploratory analyses. Often, these data are
+contained in XML formatted outputs, which although they hold all relevant
+information, are difficult to parse. To our knowledge, no publicly available
+tools exist to parse MEME Suite XML formatted data, therefore users must write
+custom code to extract these data. `memes` exports data import functions for
+each supported MEME Suite tool, which import these data as R data.frames. These
+functions work internally to create the seamless file I/O when calling MEME
+Suite tools, but the import functions can be called directly by users to import
+previously generated data for use in R.
+
+Many of the MEME Suite tools, such as MEME, DREME, or TomTom return data which
+describe properties of motifs. For example, MEME and DREME return de-novo
+discovered motifs from query regions along with statistical information about
+their enrichment. The `universalmotif` data structure is a powerful
+R/Bioconductor representation for motif matrices and their associated metadata. 
+However, `universalmotif` objects are not ideal for performing bulk manipulation
+or queries of metadata, nor do they support complex data structures such as
+nested elements. Many MEME Suite analysis pipelines involve identifying motifs
+which are further analyzed by multiple tools, creating additional metadata. Thus
+an ideal representation for these data is one which can hold an unlimited amount
+of metadata, and contain complex heirarchies. `memes` therefore extends the
+`universalmotif` format by providing data.frames holding motif metadata which
+retain links to their `universalmotif` representation. These universalmotif
+data.frames combine the advantages of the `universalmotif` framework for motif
+manipulation with the extensibility and flexibility of R data.frames, and are
+the basis for a majority of `memes` data outputs. These structures are also
+valid input types to `memes` functions, and when used as such, output data are
+appended as new columns to the input data, ensuring data provenance.
+
+**Figure?: showing how the data.frame connects to universalmotif**
+
+`universalmotif` data.frames can additionally be used to examine or manipulate
+the properties of any motif database. Using `universalmotif` functions to import
+motif data, `as_universalmotif_dataframe()` converts any `universalmotif` object
+into a `universalmotif` data.frame which can be manipulated using base R or
+`tidyverse` functions, just like regular R data.frames. Manipulation of linked
+metadata columns will result in updating the linked `universalmotif` object when
+calling `update_motifs()` to retain the data.frame structure, or when calling
+`as_universalmotif()` to convert the data.frame into `universalmotif` format. In
+this way, `memes` enables large-scale motif database manipulation & analysis
+within the preexisting R framework.
+
+### Genomic range-based data as entrypoint
+
+When analyzing ChIP-seq data in R, transcription factor binding locations (ChIP
+Peaks) are commonly represented as `GenomicRanges` objects, which contain
+genomic positions of each peak, along with an arbitrary number of metadata
+columns describing features of each peak. 
+
+A key difference between `memes` and the MEME Suite tools is that `memes`
+provides tools allowing the peak-level metadata to frame subsequent analysis.
+For DNA ranges (such as in ChIP-seq), the `get_sequence()` utility acts as the
+entrypoint to analysis with `memes`. `get_sequence()` returns a `Biostrings`
+object containing the DNA sequence of each feature in the input ranges. If
+ranges are split into groups by a metadata value, `get_sequence()` will return a
+list of sequences for each group. When a sequence list is used as input into
+`memes` core functions, the function will run once for each group, enabling a
+native "split-apply-combine" workflow without any additional user overhead
+\cite{splitapplycombine, wickham}. Together, these features empower users to
+use range-based metadata as the centerpoint of their analyses.
+
+
+
+
+### Old Design & Implementation
 The key underlying design principle of `memes` was to create tools that easily
 integrate into the existing suite of tools available in `Bioconductor` and the
 broader `R` package landscape. In this way, `memes` tools can be used to extend
