@@ -165,8 +165,22 @@ interoperability between MEME Suite tools and the broader R package landscape.
 # Results 
 ## Design & Implementation
 
-### Datatypes
+### Core Utilities
 
+The core functionality of `memes` revolves around the interface to MEME Suite
+tools. Each supported MEME Suite tool is assigned a `run` function
+(`runDreme()`, `runMeme()`, `runAme()`, `runFimo()`, `runTomTom()`), which
+accept sequence and motif inputs as needed and any valid commandline flags as
+additional function parameters.
+
+**Describe each tool briefly?**
+ - This could also be relegated to a table
+
+**table of comparison to commandline software?**
+  - input type:
+  - output type:
+  
+### Datatypes
 
 MEME Suite tools are run on the commandline and use files stored on-disk as
 input while returning a series of output files containing varying data types.
@@ -228,10 +242,11 @@ within the preexisting R framework.
 
 ### Genomic range-based data as entrypoint
 
-When analyzing ChIP-seq data in R, transcription factor binding locations (ChIP
-Peaks) are commonly represented as `GenomicRanges` objects, which contain
-genomic positions of each peak, along with an arbitrary number of metadata
-columns describing features of each peak. 
+**CONTINUE**
+
+MEME Suite focuses on sequence data as the centerpoint of analysis, but in the
+case of ChIP-seq, data are often stored as genomic coordinates with additional
+metadata columns, such as `GRanges` objects in R/Bioconductor. 
 
 A key difference between `memes` and the MEME Suite tools is that `memes`
 provides tools allowing the peak-level metadata to frame subsequent analysis.
@@ -297,56 +312,10 @@ with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this
 way, users don't need to learn new ways of working with data, and outputs can
 be integrated with other tools with limited effort.
 
-## Core Utilities
 
-The core functionality of `memes` revolves around the interface to MEME Suite
-tools. Each supported MEME Suite tool is assigned a `run` function
-(`runDreme()`, `runMeme()`, `runAme()`, `runFimo()`, `runTomTom()`), which
-accept sequence and motif inputs as needed and any valid commandline flags as
-additional function parameters.
-
-**Describe each tool briefly?**
- - This could also be relegated to a table
-
-**table of comparison to commandline software?**
-  - input type:
-  - output type:
-
-Tools requiring sequences as input can use a path to a .fasta format
-file, a `Biostrings::XStringSet`, or a `Biostrings::BStringSetList` as input.
-These data structures support all biological sequence types: DNA,
-RNA, and amino-acid. For the remainder of the text, we will 
-**use chip-seq data analysis as a framework to highlight memes features**
-\strikethrough{focus our examples on DNA sequences.}
-
-Some `memes` tools require motifs as input. In these instances, `memes` will
-always accept a path to a .meme format file, or a list of motifs in
-`universalmotif` format \cite{universalmotif}. The `universalmotif` package
-provides simple import and motif conversion functions for all common motif data
-structures and file types, ensuring cross-compatability with all commonly used
-motif data formats. When `memes` functions return motifs, they are returned to
-the user in `universalmotif` format. This ensures that all `memes` motif outputs
-can be used as inputs to other `memes` functions that accept motif inputs.
 Furthermore, `universalmotif` conversion tools allow `memes` detected motifs to
 be used in many other popular Bioconductor motif packages, such as `TFBSTools`
 and `motifStack`, providing the user with maximum flexibility in their analysis.
-
-When analyzing ChIP-seq data in R, transcription factor binding locations (ChIP
-Peaks) are commonly represented as `GenomicRanges` objects, which contain
-genomic positions of each peak, along with an arbitrary number of metadata
-columns describing features of each peak. 
-
-A key difference between `memes` and the MEME Suite tools is that `memes`
-provides tools allowing the peak-level metadata to frame subsequent analysis.
-For DNA ranges (such as in ChIP-seq), the `get_sequence()` utility acts as the
-entrypoint to analysis with `memes`. `get_sequence()` returns a `Biostrings`
-object containing the DNA sequence of each feature in the input ranges. If
-ranges are split into groups by a metadata value, `get_sequence()` will return a
-list of sequences for each group. When a sequence list is used as input into
-`memes` core functions, the function will run once for each group, enabling a
-native "split-apply-combine" workflow without any additional user overhead
-\cite{splitapplycombine, wickham}. Together, these features empower users to
-use range-based metadata as the centerpoint of their analyses.
 
 ### Discriminative analysis
 A powerful feature of several MEME Suite Tools is the ability to perform
