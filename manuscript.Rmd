@@ -344,9 +344,18 @@ for `rocker/rstudio`, so maybe omit this until fixed) containers containing a
 preinstalled version of the MEME Suite along with an R/Bioconductor analysis
 environment including the most recent version of `memes` and its dependencies.
 
+# Results
+
+
 
   
-# Future developments:
+# Availability and Future developments:
+ - packge source code: `github.com/snystrom/memes`
+ - documentation website: `snystrom.github.io/memes`
+ - docker container: `https://hub.docker.com/r/snystrom/memes_docker`
+ - singularity container: `???`
+
+### Future Features:
  - Additional meme suite tools
  - more data visualizations
  - better support for PSP generation
