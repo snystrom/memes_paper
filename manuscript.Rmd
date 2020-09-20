@@ -64,7 +64,7 @@ leaving a gap in functionality with no clear alternatives.
 
 The MEME Suite is a series of commandline tools which provide a variety of
 features for motif analysis such as *de-novo* motif discovery, enrichment
-testing,comparison, and matching. Here we present `memes`, a motif analysis
+testing, comparison, and matching. Here we present `memes`, a motif analysis
 package which provides a seamless interface to MEME Suite tools within R.
 
 `memes` uses base R and Bioconductor data types for better integration with
@@ -130,10 +130,13 @@ comprehensive set of utilities to interrogate motif content across a broad range
 of biological contexts. However, several factors limit the full potential of
 these tools for use in data analysis. 
   1) must do significant preprocessing to get data in correct input format
+    - written to analyze 1 group of sequences, not amenable to multigroup designs
+    - no common patterns for generating inputs from ChIP-seq whose data are primarily range based
   2) Easily parseable output data often doesn't contain all information
     - ex tomtom alternative hits in .tsv output only present in IUPAC format, not matrix
       - matrix is present in XML file, but no tools exist to parse this
-  3) limited data visualization capabilities 
+  3) limited data visualization capabilities
+  4) difficult to integrate data with additional sources
 
 Here we present `memes`, a motif analysis package which provides a seamless
 interface to MEME Suite tools within R. `memes` uses base R and Bioconductor
@@ -141,9 +144,10 @@ data types for data input and output, facilitating better integration with
 common analysis tools like the `tidyverse` and other Bioconductor packages.
 Unlike the commandline implementation, `memes` outputs also function as inputs
 to other MEME Suite tools, allowing simple construction of motif analysis
-pipelines without additional data processing steps. Additionally, R/Bioconductor data
-structures provide a full-featured representaiton of MEME Suite output data, providing
-users quick access to all relevant data structures with simple syntax. 
+pipelines without additional data processing steps. Additionally, R/Bioconductor
+data structures provide a full-featured representaiton of MEME Suite output
+data, providing users quick access to all relevant data structures with simple
+syntax. 
 
 In addition to wrapping MEME Suite utilities, `memes` extends the functionality
 of `universalmotif` to provide base R and `tidyverse` compatible syntax for
@@ -180,320 +184,174 @@ additional function parameters.
   - input type:
   - output type:
   
-### Datatypes
+### Data Structures
 
 MEME Suite tools are run on the commandline and use files stored on-disk as
 input while returning a series of output files containing varying data types.
 `memes` reduces each MEME Suite tool to an R function which internally handles
 file I/O such that all MEME Suite calling functions accept R objects as input,
 and return R objects as output. Sequence inputs are stored in `BioStrings`
-format, an R/Bioconductor package for storing biopolymer sequence data. Motif
-inputs are passed as `universalmotif` objects, another R/Bioconductor package
-for representing motif matrices and their associated metadata. `memes` will also
-always accept paths to files on disk, such as fasta files for sequence inputs,
-and meme format files for motif inputs.
+format, an R/Bioconductor package for storing biopolymer sequence data
+\cite{BioStrings}. Motif inputs are passed as `universalmotif` objects, another
+R/Bioconductor package for representing motif matrices and their associated
+metadata \cite{universalmotif}. `memes` will also always accept paths to files
+on disk, such as fasta files for sequence inputs, and meme format files for
+motif inputs, reducing the need to read large files into memory to run MEME
+Suite tools.
 
-The MEME Suite tools do not return consistent data structures across tools. For
-example, the tool TomTom, which compares query motifs to a database of known
-motifs, returns tab-separated results which do not contain the frequency matrix
-representations of the matched motifs. Instead, users must parse these matrices
-back out from the input databases, creating additional friction for creating
-novel data visualizations and exploratory analyses. Often, these data are
-contained in XML formatted outputs, which although they hold all relevant
-information, are difficult to parse. To our knowledge, no publicly available
-tools exist to parse MEME Suite XML formatted data, therefore users must write
-custom code to extract these data. `memes` exports data import functions for
-each supported MEME Suite tool, which import these data as R data.frames. These
-functions work internally to create the seamless file I/O when calling MEME
-Suite tools, but the import functions can be called directly by users to import
-previously generated data for use in R.
+Although MEME Suite tools accept consistent data type inputs, they do not return
+consistent data structures across tools. For example, the tool TomTom, which
+compares query motifs to a database of known motifs, returns tab-separated
+results which do not contain the frequency matrix representations of the matched
+motifs. Instead, users must write custom code to parse these matrices back out
+from the input databases, creating additional friction for creating novel data
+visualizations and exploratory analyses. Often, output data are also returned in
+XML format, which although they hold all relevant information, are difficult to
+parse. To our knowledge, no publicly available tools exist to parse MEME Suite
+XML formatted data, therefore users must write custom code to extract these
+data. `memes` exports data import functions for each supported MEME Suite tool,
+which import these data as R data.frames. These functions also work internally to
+create the seamless file I/O when calling MEME Suite tools, but the import
+functions can be called directly by users to import previously generated data
+for use in R.
+
+ - **NOTE: Biopython has a MEME/MAST parser but it works on tsv https://biopython.org/docs/1.74/api/Bio.motifs.meme.html**
+ - **Actually, they merged XML import in March: https://github.com/biopython/biopython/pull/2354**
+ - **Need to revise above statement, but note that most tools don't have support**
 
 Many of the MEME Suite tools, such as MEME, DREME, or TomTom return data which
 describe properties of motifs. For example, MEME and DREME return de-novo
-discovered motifs from query regions along with statistical information about
+discovered motifs from query sequences along with statistical information about
 their enrichment. The `universalmotif` data structure is a powerful
-R/Bioconductor representation for motif matrices and their associated metadata. 
+R/Bioconductor representation for motif matrices and their associated metadata \cite{universalmotif}. 
 However, `universalmotif` objects are not ideal for performing bulk manipulation
 or queries of metadata, nor do they support complex data structures such as
 nested elements. Many MEME Suite analysis pipelines involve identifying motifs
-which are further analyzed by multiple tools, creating additional metadata. Thus
+which are further analyzed by multiple tools, creating additional metadata which
+cannot be easily tracked in bulk using `universalmotif` format. Thus
 an ideal representation for these data is one which can hold an unlimited amount
-of metadata, and contain complex heirarchies. `memes` therefore extends the
-`universalmotif` format by providing data.frames holding motif metadata which
-retain links to their `universalmotif` representation. These universalmotif
+of metadata, contain complex heirarchies, and be easily manipulated using
+standard analysis tools. `memes` therefore extends the `universalmotif` format
+by providing data.frames holding motif metadata which retain links to their
+`universalmotif` representation. These universalmotif
 data.frames combine the advantages of the `universalmotif` framework for motif
-manipulation with the extensibility and flexibility of R data.frames, and are
-the basis for a majority of `memes` data outputs. These structures are also
-valid input types to `memes` functions, and when used as such, output data are
-appended as new columns to the input data, ensuring data provenance.
+manipulation with the extensibility and flexibility of R data.frames. These
+`universalmotif` data.frames form the basis for a majority of `memes` data
+outputs. These structures are also valid input types to `memes` functions, and
+when used as such, output data are appended as new columns to the input data,
+ensuring data provenance.
 
 **Figure?: showing how the data.frame connects to universalmotif**
 
-`universalmotif` data.frames can additionally be used to examine or manipulate
-the properties of any motif database. Using `universalmotif` functions to import
-motif data, `as_universalmotif_dataframe()` converts any `universalmotif` object
+`universalmotif` data.frames are not limited to storing motifs from MEME Suite
+data, and can additionally be used to examine or manipulate the properties of
+any motif list or database. Using `universalmotif` functions to import motif data,
+the `memes` function `as_universalmotif_dataframe()` converts any `universalmotif` object
 into a `universalmotif` data.frame which can be manipulated using base R or
 `tidyverse` functions, just like regular R data.frames. Manipulation of linked
 metadata columns will result in updating the linked `universalmotif` object when
 calling `update_motifs()` to retain the data.frame structure, or when calling
-`as_universalmotif()` to convert the data.frame into `universalmotif` format. In
+`as_universalmotif()` to convert the data.frame back into `universalmotif` format. In
 this way, `memes` enables large-scale motif database manipulation & analysis
 within the preexisting R framework.
 
-### Genomic range-based data as entrypoint
+### Support for genomic range-based data
 
-**CONTINUE**
+# RETURN
+Motif analysis is important for assays like ChIP-seq which store data as genomic
+coordinates, not sequence. This is in conflict with MEME Suite which is designed
+to study sequences. Therefore, users must write custom code to extract DNA
+sequence of their ranges of interest. Although tools like `bedtools getfasta`
+can simplify the process of extracting DNA sequence from genomic coordinates,
+some MEME tools require fasta headers to be specially formatted to extract full
+functionality, requiring users to write additional custom code to properly
+format input data. 
 
-MEME Suite focuses on sequence data as the centerpoint of analysis, but in the
-case of ChIP-seq, data are often stored as genomic coordinates with additional
-metadata columns, such as `GRanges` objects in R/Bioconductor. 
+`memes` provides the `get_sequence` function which automates the extraction of
+DNA sequence from genomic coordinates while simultaneously producing MEME Suite
+formatted fasta headers. `get_sequence` accepts genomic-range based inputs in
+`GenomicRanges` format, the *de-facto* standard for genomic coordinate
+representation in R \cite{genomicranges}. Other common genomic coordinate
+representations, such as bed format, are easily imported as `GenomicRanges`
+objects into R using preexisting import functions, meaning users must not write
+any custom import functions to work with range-based data using `memes`. 
+Sequences are returned in `Biostrings` format and can therefore be used as
+inputs to all `memes` commands or as inputs to other R/Bioconductor functions
+for sequence analysis. 
 
-A key difference between `memes` and the MEME Suite tools is that `memes`
-provides tools allowing the peak-level metadata to frame subsequent analysis.
-For DNA ranges (such as in ChIP-seq), the `get_sequence()` utility acts as the
-entrypoint to analysis with `memes`. `get_sequence()` returns a `Biostrings`
-object containing the DNA sequence of each feature in the input ranges. If
-ranges are split into groups by a metadata value, `get_sequence()` will return a
-list of sequences for each group. When a sequence list is used as input into
-`memes` core functions, the function will run once for each group, enabling a
-native "split-apply-combine" workflow without any additional user overhead
-\cite{splitapplycombine, wickham}. Together, these features empower users to
-use range-based metadata as the centerpoint of their analyses.
+During analysis of multiomic data, users often uncover different functional
+categories of genomic regions through integration of multiple datasets. In these
+instances, motif analysis acts as a powerful tool to examine whether differences
+in motif content is associated with membership of distinct categories. In some
+cases, performing differential motif analysis (using one category as the "test"
+set and another as the "control") can uncover biologically relevant motifs which
+are enriched in one category relative to another. Although the MEME Suite allows
+differential enrichment testing, it does not inheritly provide a mechanism for
+analyzing groups of sequences in parallel, or performing motif analysis with any
+understanding of data categories. The `memes` framework enables "data-aware"
+motif analysis workflows by allowing named lists of `Biostrings` objects as
+input to each function. If using `GenomicRanges`, users can split peak data on a
+metadata column using the base R `split` function, and use this result as input
+to `get_sequence`, which will produce a list of `BioStrings` objects where each
+entry is named after each data category from the split column. When a list is
+used as input to a `memes` function, it runs the corresponding MEME Suite tool
+for each object in the list. Users can also pass the name(s) of a category to
+the `control` argument to automatically enable differential analysis of all
+other list members against the control category sequences.  Therefore, `memes`
+enables complex data-aware differential motif analysis workflows using simple
+syntax to extend the capabilities of the MEME Suite.
 
+### Table of supported MEME Suite Tools
+ - comparison to other tools?
+ - Maybe only do this if asked
 
-
-
-### Old Design & Implementation
-The key underlying design principle of `memes` was to create tools that easily
-integrate into the existing suite of tools available in `Bioconductor` and the
-broader `R` package landscape. In this way, `memes` tools can be used to extend
-existing analysis pipelines, or to create novel analyses.
-
-MEME Suite tools are run on the commandline and use files stored on-disk as
-input while returning a series of output files which together compose the full
-results of the tool. While all tools produce machine-readable data formats, few
-options exist for parsing the full complement of these data into human readable
-format for use outside of the MEME Suite environment.
-
-MEME Suite are run on the commandline and take 
-as input fasta files of sequences
-which will be searched for motifs, and if necessary, .meme format motif files
-containing motifs to use in the search (REF: table of inputs). 
-
-The MEME Suite is a series of commandline tools which provide a variety of
-features for motif analysis such as *de-novo* motif discovery, motif enrichment
-testing, motif comparison, and motif matching, among others \cite{meme-suite}.
-MEME Suite tools take as input fasta files of sequences which will be searched
-for motifs, and if necessary, .meme format motif files containing motifs to use
-in the search. 
-
-At its most basic form, `memes` acts as a wrapper of these functions: users can
-point `memes` tools to files on disk, `memes` will construct the commandline
-call, output files will be saved on disk and imported into R for further analysis.
-However, `memes` is more than just a simple wrapper of the MEME Suite, it is an
-analysis framework allowing seamless integration of MEME Suite tools by
-providing an abstraction layer which handles file input/output (I/O) to allow
-inputs and outputs in the form of in-memory R objects. 
-
-When running a MEME Suite tool using `memes`, inputs are allowed in multiple
-formats providing the user additional flexibility when performing motif analysis
-(see "Core Utilities" for details). Of note, most outputs of `memes` tools can
-be used as inputs to other `memes` tools, allowing easy construction of
-pipelines (for example, discovering *de-novo* motifs with DREME, then finding
-the genomic positions of those motifs in target regions using FIMO).
- - unlike current MEME tools (ex tomtom -> FIMO is hard to do)
-
-By shifting the focus from managing files on disk which may change infrequently to R data
-objects, this framework reinforces the requirement of writing reproducible
-analysis code to generate reproducible results.
-
-Whenever possible, `memes` uses standard R data types for better integration
-with common analysis tools, like `dplyr`, `GenomicRanges`, or base R. In this
-way, users don't need to learn new ways of working with data, and outputs can
-be integrated with other tools with limited effort.
-
-
-Furthermore, `universalmotif` conversion tools allow `memes` detected motifs to
-be used in many other popular Bioconductor motif packages, such as `TFBSTools`
-and `motifStack`, providing the user with maximum flexibility in their analysis.
-
-### Discriminative analysis
-A powerful feature of several MEME Suite Tools is the ability to perform
-discriminative analysis, where motifs are identified or tested for enrichment
-in one group of sequences relative to another. In many instances, running tools
-in discriminative mode on a set of control sequences outperforms simply using
-shuffled input sequences as the control (back this up, change wording? maybe:
-using biologically relevant control sequences can improve quality of results?).
-Therefore, enabling complex discriminative analysis designs was central to the
-design of `memes`.
-
-When using list input to `memes` tools, names of list object members can be
-passed to the `control` argument. This results in running the tool in
-discriminative mode using those sequences as the control sequences for all other
-list members. By passing multiple names to `control`, the sequences are combined
-together to create a merged background set. In this way, performing data-driven
-discriminative analysis is just as simple as one using shuffled sequences as
-background.
-
-```{r, eval=F}
-############
-# Replace this for a real set of peaks 
-sequences_list <- list("Static" = "seq",
-                       "Increasing" = "seq",
-                       "Decreasing" = "seq")
-############
-
-# run Dreme on Static, Increasing, Decreasing sites using shuffled input as background
-runDreme(sequences_list, "shuffle")
-
-# run Dreme on Increasing, Decreasing sites using Static sites as background
-runDreme(sequences_list, "Static")
-
-# run Dreme on Decreasing sites using a combined set of Static + Increasing sites as background
-runDreme(sequences_list, c("Static", "Increasing"))
-```
-
-## Metadata manipulation
-`memes` is built on top of the `universalmotif` framework, which provides
-methods for importing motifs from various file formats into a unified R data
-representation complete with metadata information \cite{universalmotif}.
-However, a major limitation of the `universalmotif` framework is that 
-manipulating or filtering multiple `universalmotif` entries requires potentially
-unfamiliar overhead for less experienced users, acting as a barrier to
-performing potentially useful operations.
-
-The `as_universalmotif_dataframe()` function from `memes` converts
-`universalmotif` objects into a more familiar `data.frame` format which can be
-manipulated using `tidyverse` or base R tools. These data.frames also contain a
-special `motif` column which stores the `universalmotif` object of each entry.
-Users can update columns in the data.frame which will be reflected in the
-corresponding metadata entries of the `motif` by running `update_motifs()` after
-manipulating the columns. These data.frames can be converted back into
-`universalmotif` format using `as_universalmotif`, which also updates the
-metadata using column values. The results from running the core MEME Suite
-functions are stored in this format whenever appropriate, creating a consistent
-framework for users to explore and manipulate motifs and their associated data values.
-
-**This section is maybe too listy and could be fleshed out more / integrated above better**
-Examples of common manipulations to motif databases which are aided by this
-format include bulk renaming of entries, identification and removal of redundant
-entries, and exploratory analysis of motif databases.
-
-```{r}
-# Example of renaming motifs w/ universalmotif syntax
-library(universalmotif)
-m1 <- create_motif()
-m2 <- create_motif()
-my_motifs <- list(m1,m2)
-
-my_names <- c("motif one", "motif two")
-
-for (i in 1:length(my_motifs)) {
-  my_motifs[[i]]@name <- my_names[i]
-}
-
-# Example of renaming motifs w/ memes syntax
-my_motifs <- list(m1,m2)
-my_motifs %<>% 
-  as_universalmotif_dataframe() %>% 
-  dplyr::mutate(name = my_names) %>% 
-  as_universalmotif()
-```
-
-This data format also allows users to integrate external data sources into their
-analyses, for example, to filter a motif database to include only motifs for
-genes which are expressed in their tissue of interest. Using motif databases
-filtered in this way has been demonstrated in multiple contexts to provide
-higher quality results when searching for novel regulators based on motif
-content \cite{hector franco, eric olson, john stamm?, shep & greenleaf, klu worm
-paper}.
-
-## Data Visualization (section unfinished)
-
-The MEME Suite provides a limited set of data visualizations which have limited
+## Data visualization
+The MEME Suite provides a small set of data visualizations which have limited
 customizability. `memes` leverages the advantages of the R graphics environment
-to provide novel data visualizations which are infinitely customizable by the user.
+to provide novel data visualizations which are infinitely customizable by the user. 
 
-  - `view_tomtom_hits()` allows examination of tomtom results, allowing the user
-  to evaluate the quality of the assigned match.
+ - `view_motifs()` plots motif as stack (if I decide to add this feature... need to think about this)
+ - `ame_plot_heatmap` plot clustered heatmap of AME results 
+   - `ame_compare_heatmap_methods` compare nonlinearity of data visualization in heatmap form
+ - `view_tomtom_hits` visualize and compare TomTom matches to assess match quality
+   - `force_best_match` can be used to update "best" match demonstrating how data visualization can be useful for data curation
 
-```{r}
-# Example comparison of view_tomtom_hits results
-plot_topHits <- example_tomtom %>% 
-  dplyr::mutate(name = "Example Motif (Has Matches)") %>% 
-  update_motifs() %>% 
-  view_tomtom_hits(2)
+The AME tool searches for enrichment of motifs within groups of sequences
+relative to a control set. The meaningful result from this tool is the
+statistical parameter (for example, a p-value) associated with the significance
+of motif enrichment. However, AME does not provide a mechanism for visualizing
+these results. Additionally, AME is often used 
+## RETURN
 
-plot_noMatch <- create_motif() %>% 
-  as_universalmotif_dataframe() %>% 
-  dplyr::mutate(name = "Example Motif (No Matches)") %>% 
-  update_motifs() %>% 
-  {
-    x <- .
-    x$tomtom <- list(NULL)
-    return(x)
-  } %>% 
-  view_tomtom_hits()
 
-cowplot::plot_grid(plotlist = list(plot_topHits[[1]], plot_noMatch[[1]]), ncol = 2, labels = "AUTO")
-```
- 
-  - `ame_plot_heatmap()` allows comparison of AME results between multiple
-  groups. Heirarchical ordering of hits shows commonalities and differences in enrichment between groups.
-```{r}
-# AME Heatmap example plots
-example_ame$Decreasing %>% 
-  ame_plot_heatmap()
-
-example_ame %>% 
-  dplyr::bind_rows(.id = "id") %>% 
-  ame_plot_heatmap(group = id)
-```
-
-# Conclusion
- - `memes` is cool
- - use `memes`
- - it's on github (provide link)
- - manual is here:
-
-# Notes
-
-**Example of commandline vs `memes`?**
-For example, to run DREME on the commandline on "input.fasta", while setting the random seed to 100:
-```{bash, eval=F}
-# Shell command setting random seed to 100
-dreme -s 100 input.fasta
-```
-
-The `memes` implementation of the above command would be written as follows:
-```{r, eval=F}
-# memes command setting random seed to 100
-# user explicitly states they want to shuffle input sequences as control
-runDreme("input.fasta", control = "shuffle", s = 100)
-```
-
-### Motif Comparison (TomTom)
- - takes runDreme/meme output as input -> pipes
- - enables using best matched motif as input to other tools (unlike TomTom on commandline)
-
-### Motif Matching (FIMO)
- - returns locations as GRanges
- - integrates well with `plyranges` to facilitate range-based join operations to integrate peak-level metadata with motif information, vice-versa
- 
-
-\begin{figure}
-\includegraphics[width=\textwidth]{figures/memes_model.png}
-\caption{A diagram of memes tools & workflows?
-flowchart of each step, getsequence-> run-> import -> visualize -> goto run
-
-Diagram how meme-suite tools work vs memes?
-}
-\label{fig:model} 
-\end{figure}
+## Containerized analysis maximizes availability and facilitates reproducibility
+`memes` relies on a locally installed version of the MEME Suite which is
+accessed by the users R process. Although R is available on Windows, Mac, and
+Linux operating systems, the MEME Suite is incompatible with Windows, limiting
+its adoption by Windows users. Additional barriers also exist to installing a
+local copy of the MEME Suite on compatible systems. The MEME Suite relies on
+several system-level dependencies whose installation can be difficult for novice
+users. Finally, some tools in the MEME Suite use python to generate shuffled
+control sequences for analysis, which presents a reproducibility issue as the
+random number generation algorithm changed from python2.7 to python3. The MEME
+Suite will build and install on both python2.7 and python3 systems, therefore
+without careful consideration of this behavior, the same code run on two systems
+may not produce identical results, even if using the same major version of the
+MEME Suite. In order to democratize access to the MEME Suite on unsupported
+operating systems, and to facilitate reproducibile motif analysis using `memes`, 
+we have also developed docker and singularity (**NOTE:** singularity is broken
+for `rocker/rstudio`, so maybe omit this until fixed) containers containing a
+preinstalled version of the MEME Suite along with an R/Bioconductor analysis
+environment including the most recent version of `memes` and its dependencies.
 
 
   
 # Future developments:
  - Additional meme suite tools
+ - more data visualizations
  - better support for PSP generation
  - Better support for amino-acid sequence usage (please contact us with feature requests)
+ 
+# Acknowledgements
+ - Sean Davis automated docker builds
+ - Megan Justice, feedback, feature requests
