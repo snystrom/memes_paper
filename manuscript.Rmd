@@ -8,7 +8,7 @@ output: word_document
 ---
 
 ```{r setup}
-library(dremeR)
+library(memes)
 library(magrittr)
 ```
 
@@ -346,7 +346,195 @@ environment including the most recent version of `memes` and its dependencies.
 
 # Results
 
+Here we briefly highlight each of `memes` current features for analyzing
+ChIP-seq data. Additional detailed walkthroughs for each supported MEME Suite
+tool, and a complete example using `memes` to analyze ChIP-seq data can be found
+in the `memes` vignette and the package website
+([snystrom.github.io/memes](snystrom.github.io/memes)). In the following
+example, we reanalyze recent work examining the causal relationship between the
+binding of the transcription factor E93 to changes in chromatin accessibility
+during *Drosophila* wing development \cite{Nystrom, Niederhuber 2020}. Here, we
+utilize ChIP-seq peak calls for E93 which have been annotated according to the
+change in chromatin accessibility observed before & after E93 binding. These
+data are an ideomatic example of range-based genomic data (E93 ChIP peaks)
+containing additional groupings (the chromatin accessibility response following
+DNA binding) whose membership may be influenced by differential motif content.
+We show how `memes` syntax allows complex analysis designs, how `memes`
+utilities enable deep interrogation of results, and how `memes` flexible data
+structures empower users to integrate the `memes` workflow with tools offered by
+other R/Bioconductor packages.
 
+### RETURN HERE
+### NOTE TO SELF:
+ - This is too much of a tutorial & vignette.
+ - move this text to the vignette since there isn't any.
+ - Instead, highlight some of the interface useage like so:
+
+To run dreme, where `peaks` are chip peaks below with a metadata column `e93_respnose`:
+```{r}
+seq <- peaks %>% split(mcols(.)$response) %>% get_sequence
+runDreme(seq, control = "static")
+```
+
+----------------
+```{r, include=FALSE}
+drake::loadd(chip_results)
+```
+
+We begin with a `GenomicRanges` object of E93 ChIP-peak summits +/- 100 bp with
+a metadata column indicating the change in chromatin accessibility associated
+with E93 binding at that region. 
+```{r}
+chip_results %>% head
+```
+
+### Denovo motif discovery using DREME
+
+One approach to identify *de-novo* motifs within ChIP peaks is to use DREME,
+which performs discriminative motif detection in an input set of sequences
+relative to a control set \cite{dreme}. To search for *de-novo* motifs within
+E93 bindings sites using DREME, we first use the `get_sequence()` function which
+returns the DNA sequence within genomic coordinates.
+```{r}
+genome <- BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3
+
+all_seq <- chip_results %>% 
+  get_sequence(genome)
+```
+
+The output is stored as a `DNAStringSet`, shown below.
+```{r}
+head(all_seq, 3)
+```
+
+The `runDreme` command is used to begin a motif search using DREME. Although it
+is possible to use any number of input sequences, runtimes quickly become
+infeasible as sequences exceed 100000 total bp. This can be overcome in a
+variety of ways: users can rank peaks by ChIP-seq signal, or some other
+quantitative value, and use a subset selected by rank, or in the absence of any
+quantitative measure, users can randomly sample their sequences to use as input.
+For simplicity in this example, we subset our data to 1000 randomly selected
+peaks. Setting `control = "shuffle"` uses DREME's built-in dinucleotide
+shuffling algorithm to produce a control set of seqeunces.
+
+```{r}
+set.seed(123) # setting a random seed ensures sampling produces a reproducible subsample
+sequence_subset <- sample(all_seq, 1000)
+all_dreme_res <- runDreme(sequence_subset, control = "shuffle", nmotifs = 3)
+```
+
+```{r}
+all_dreme_res
+```
+
+
+
+### Preparing a motif database for searching
+
+Transcription factors often bind with sequence specificity to regulate activity
+of nearby genomic elements. Therefore, comparison of *de-novo* motifs with known
+DNA binding motifs for transcription factors can be a key step in identifying
+regulators of genomic elements.
+
+The TomTom tool is used to compare unknown motifs against a list of known motifs
+to identify matches. By passing the results from DREME into TomTom and searching
+within a database of *Drosophila* transcription factor motifs, we can identify
+candidate transcription factors which may also bind at E93 ChIP peaks. A major
+limitation of this approach is that transcription factors containing similar
+families of DNA binding domain often possess highly similar motifs, making it
+difficult to identify the "true" binding factor of a discovered motif.
+Additionally, when searching for matches against a motif database, TomTom must
+account for multiple testing, therefore using a larger than necessary motif
+database can produce a large multiple testing penalty, limiting sensititity of
+detection. One way to overcome these limitations is to limit the transcription
+factor motif database to include only motifs for transcription factors expressed
+in the sample of interest. Accounting for transcription factor expression during
+motif analysis has been demonstrated to  increase the probability of identifying
+biologically relevant transcription factor candidates \cite{hector franco's STAR paper, others?}.
+
+The `memes` universalmotif data.frame structure can be used to integrate
+expression data with a motif database. First, we import a pre-filtered list of
+genes expressed in a timecourse of **Drosophila** wing development.
+
+```{r}
+rna_counts <- read.csv("data/wing_expressed_genes.csv", stringsAsFactors = FALSE)
+```
+```{r, echo = FALSE}
+head(rna_counts)
+```
+
+Next we import a database of known *Drosophila* transcription factor motifs
+generated from the Fly Factor Survey in `universalmotif` format, and convert to a data.frame format using `as_universalmotif_dataframe()` \cite{fly factor}.
+```{r}
+flyFactor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
+  as_universalmotif_dataframe()
+```
+```{r, echo = FALSE}
+head(flyFactor, 5)
+```
+
+
+```{r}
+tomtom_results <- runTomTom(all_dreme_res, database = "data/flyFactorSurveyCleaned.meme", dist = "ed")
+```
+Here we visualize the top 3 matches from TomTom for each *de-novo* motif using
+`view_tomtom_hits()`. Results are plotted in descending order according to match
+score. The results of this function can be integrated into additional R graphics
+libraries, such as `patchwork` or `cowplot` to generate publication-quality
+figures \cite{patchwork, cowplot}.
+```{r, fig.height=5, fig.width=12}
+tomtom_results %>% 
+  view_tomtom_hits(3) %>% 
+  patchwork::wrap_plots(., nrow = 1, tag_level = "new") +
+    patchwork::plot_annotation(tag_levels = "A")
+```
+## Replace above chunks with sections below 
+(rstudio crashed without saving)
+--------------
+Next we import a database of known *Drosophila* transcription factor motifs
+generated from the Fly Factor Survey in `universalmotif` format, and convert to a data.frame format using `as_universalmotif_dataframe()` \cite{fly factor}.
+```{r}
+fly_factor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
+				  as_universalmotif_dataframe()
+	```
+	```{r, echo = FALSE}
+	head(fly_factor, 5)
+	```
+
+The motif database can be subsequently filtered to include only those entries
+which match an expressed gene. After filtering, the database is converted back
+to `universalmotif` format using `as_universalmotif`.
+```{r}
+# in this database, altname stores the gene symbol
+fly_factor_expressed <- fly_factor %>% 
+				  dplyr::filter(altname %in% expressed_genes$symbol) %>% 
+					  as_universalmotif()
+		```
+
+Passing the results object from *de-novo* discovery with `runDreme` and the
+filtered motif database to `runTomTom`
+```{r}
+tomtom_results <- runTomTom(all_dreme_res, database = fly_factor_expressed, dist = "ed")
+tomtom_results <- runTomTom(all_dreme_res, database = fly_factor, dist = "ed")
+```
+
+----------------
+
+
+
+
+ - prepare database
+  - filter FPKM counts, note this needs to be chosen empirically and is not always a good idea,
+  - we do this for demonstration purposes only
+ - Denovo discovery in sensitivity categories (static as background)
+  - TOMTOM matching, view_match_motifs(3)
+    - try patchwork to combine them into figure
+ - AME Across binding groups
+  - reduce redundant hits
+  - plot heatmap
+ - FIMO within sensitivity
+  - rederive PWM for E93 within sites
+   - note differences in specific bases
 
   
 # Availability and Future developments:
