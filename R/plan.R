@@ -13,6 +13,14 @@ my_plan <- drake_plan(
     dplyr::group_by(symbol) %>%
     dplyr::filter(max(fpkm) != 0),
   
+  filtered_rnaseq = full_rnaseq %>% 
+    dplyr::group_by(symbol) %>% 
+    dplyr::filter(max(fpkm) > 5) %>% 
+    dplyr::select(symbol) %>% 
+    unique(),
+  
+  write_parsed_rna = readr::write_csv(filtered_rnaseq, path = file_out("data/wing_expressed_genes.csv")),
+  
   chip_peaks = readr::read_csv(chip_path, col_types = c("chr" = "c",
                                                         "start" = "d",
                                                         "end" = "d",
@@ -25,10 +33,25 @@ my_plan <- drake_plan(
                                                         "e93_sensitive_behavior" = "c",
                                                         "wildtype_3lw_24apf_behavior" = "c")),
   chip_summits = chip_peaks %>% 
+    dplyr::rename("e93_chromatin_response" = "e93_sensitive_behavior") %>% 
+    dplyr::filter(!is.na(e93_chromatin_response)) %>% 
     GenomicRanges::GRanges() %>% 
     plyranges::anchor_start() %>% 
     plyranges::mutate(width = 1) %>% 
     plyranges::shift_right(.$summit_position) %>% 
-    select(id, peak_binding_description, e93_sensitive_behavior)
+    plyranges::select(id, e93_chromatin_response),
+  
+  chip_results = chip_summits %>% 
+    plyranges::anchor_center() %>% 
+    plyranges::mutate(width = 100)
+  
+  #genome = BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3,
+  #
+  #all_seq = chip_results %>% 
+  #  memes::get_sequence(genome),
+  #
+  #all_dreme_res_full = memes::runDreme(all_seq, control = "shuffle", nmotifs = 3)
+  
 )
   
+
