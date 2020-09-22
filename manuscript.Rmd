@@ -4,12 +4,18 @@ author:
 - ORCID: null
   name: Spencer L. Nystrom
 - name: Daniel J. McKay
-output: word_document
+output: 
+ - word_document:
+   fig.caption: yes
 ---
 
-```{r setup}
-library(memes)
-library(magrittr)
+```{r setup, echo = FALSE}
+# Figure caption: https://stackoverflow.com/questions/31926623/figures-captions-and-labels-in-knitr
+suppressPackageStartupMessages(library(memes))
+suppressPackageStartupMessages(library(magrittr))
+suppressPackageStartupMessages(library(GenomicRanges))
+suppressPackageStartupMessages(library(ggplot2))
+drake::r_make()
 ```
 
 # Bioconductor Abstract (300 words)
@@ -230,7 +236,7 @@ nested elements. Many MEME Suite analysis pipelines involve identifying motifs
 which are further analyzed by multiple tools, creating additional metadata which
 cannot be easily tracked in bulk using `universalmotif` format. Thus
 an ideal representation for these data is one which can hold an unlimited amount
-of metadata, contain complex heirarchies, and be easily manipulated using
+of metadata, contain complex hierarchies, and be easily manipulated using
 standard analysis tools. `memes` therefore extends the `universalmotif` format
 by providing data.frames holding motif metadata which retain links to their
 `universalmotif` representation. These universalmotif
@@ -286,7 +292,7 @@ in motif content is associated with membership of distinct categories. In some
 cases, performing differential motif analysis (using one category as the "test"
 set and another as the "control") can uncover biologically relevant motifs which
 are enriched in one category relative to another. Although the MEME Suite allows
-differential enrichment testing, it does not inheritly provide a mechanism for
+differential enrichment testing, it does not inherently provide a mechanism for
 analyzing groups of sequences in parallel, or performing motif analysis with any
 understanding of data categories. The `memes` framework enables "data-aware"
 motif analysis workflows by allowing named lists of `Biostrings` objects as
@@ -338,17 +344,19 @@ Suite will build and install on both python2.7 and python3 systems, therefore
 without careful consideration of this behavior, the same code run on two systems
 may not produce identical results, even if using the same major version of the
 MEME Suite. In order to democratize access to the MEME Suite on unsupported
-operating systems, and to facilitate reproducibile motif analysis using `memes`, 
+operating systems, and to facilitate reproducible motif analysis using `memes`, 
 we have also developed docker and singularity (**NOTE:** singularity is broken
 for `rocker/rstudio`, so maybe omit this until fixed) containers containing a
 preinstalled version of the MEME Suite along with an R/Bioconductor analysis
 environment including the most recent version of `memes` and its dependencies.
+As new container versions are released, they are version tagged and stored to
+ensure reproducibility while allowing updates to the container.
 
 # Results
 
 Here we briefly highlight each of `memes` current features for analyzing
 ChIP-seq data. Additional detailed walkthroughs for each supported MEME Suite
-tool, and a complete example using `memes` to analyze ChIP-seq data can be found
+tool, and a complete worked example using `memes` to analyze ChIP-seq data can be found
 in the `memes` vignette and the package website
 ([snystrom.github.io/memes](snystrom.github.io/memes)). In the following
 example, we reanalyze recent work examining the causal relationship between the
@@ -356,7 +364,7 @@ binding of the transcription factor E93 to changes in chromatin accessibility
 during *Drosophila* wing development \cite{Nystrom, Niederhuber 2020}. Here, we
 utilize ChIP-seq peak calls for E93 which have been annotated according to the
 change in chromatin accessibility observed before & after E93 binding. These
-data are an ideomatic example of range-based genomic data (E93 ChIP peaks)
+data are an idiomatic example of range-based genomic data (E93 ChIP peaks)
 containing additional groupings (the chromatin accessibility response following
 DNA binding) whose membership may be influenced by differential motif content.
 We show how `memes` syntax allows complex analysis designs, how `memes`
@@ -364,191 +372,439 @@ utilities enable deep interrogation of results, and how `memes` flexible data
 structures empower users to integrate the `memes` workflow with tools offered by
 other R/Bioconductor packages.
 
-### RETURN HERE
-### NOTE TO SELF:
- - This is too much of a tutorial & vignette.
- - move this text to the vignette since there isn't any.
- - Instead, highlight some of the interface useage like so:
 
-To run dreme, where `peaks` are chip peaks below with a metadata column `e93_respnose`:
-```{r}
-seq <- peaks %>% split(mcols(.)$response) %>% get_sequence
-runDreme(seq, control = "static")
-```
-
-----------------
-```{r, include=FALSE}
+```{r, echo = F}
 drake::loadd(chip_results)
 ```
 
-We begin with a `GenomicRanges` object of E93 ChIP-peak summits +/- 100 bp with
-a metadata column indicating the change in chromatin accessibility associated
-with E93 binding at that region. 
+The aforementioned ChIP-seq peaks are stored as a GRanges object with a metadata
+column (`e93_chromatin_response`) indicating whether chromatin accessibility
+tends to increase ("Increasing"), decrease ("Decreasing"), or remain unchanged
+("Static") following E93 binding.
 ```{r}
-chip_results %>% head
+head(chip_results, 3)
 ```
 
-### Denovo motif discovery using DREME
-
-One approach to identify *de-novo* motifs within ChIP peaks is to use DREME,
-which performs discriminative motif detection in an input set of sequences
-relative to a control set \cite{dreme}. To search for *de-novo* motifs within
-E93 bindings sites using DREME, we first use the `get_sequence()` function which
-returns the DNA sequence within genomic coordinates.
+Using the `get_sequence` function, GRanges objects are converted into
+DNAStringSet outputs.
 ```{r}
-genome <- BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3
+dm.genome <- BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3
 
-all_seq <- chip_results %>% 
-  get_sequence(genome)
-```
-
-The output is stored as a `DNAStringSet`, shown below.
-```{r}
-head(all_seq, 3)
-```
-
-The `runDreme` command is used to begin a motif search using DREME. Although it
-is possible to use any number of input sequences, runtimes quickly become
-infeasible as sequences exceed 100000 total bp. This can be overcome in a
-variety of ways: users can rank peaks by ChIP-seq signal, or some other
-quantitative value, and use a subset selected by rank, or in the absence of any
-quantitative measure, users can randomly sample their sequences to use as input.
-For simplicity in this example, we subset our data to 1000 randomly selected
-peaks. Setting `control = "shuffle"` uses DREME's built-in dinucleotide
-shuffling algorithm to produce a control set of seqeunces.
-
-```{r}
-set.seed(123) # setting a random seed ensures sampling produces a reproducible subsample
-sequence_subset <- sample(all_seq, 1000)
-all_dreme_res <- runDreme(sequence_subset, control = "shuffle", nmotifs = 3)
+all_sequences <- chip_results %>% 
+  get_sequence(dm.genome)
 ```
 
 ```{r}
-all_dreme_res
+head(all_sequences)
+```
+In order to perform analysis within different groups of peaks, the GRanges object can be `split` on a metadata column before input to `get_sequence`.
+```{r}
+sequences_by_response <- chip_results %>% 
+  split(mcols(.)$e93_chromatin_response) %>% 
+  get_sequence(dm.genome)
+
 ```
 
+This produces in a BStringSetList where list members contain a DNAStringSet for each group of sequences.
+```{r}
+head(sequences_by_response)
+```
 
+## Denovo motif analysis
+The DREME tool can be used to discover short, novel motifs present in a set of
+input sequences relative to a control set. The `runDreme` command is the `memes`
+interface to the DREME tool. `runDreme` syntax enables users to produce complex
+discriminative analysis designs using intuitive syntax. Examples of possible
+designs and their syntax are compared below.
 
-### Preparing a motif database for searching
+```{r, eval=F}
+# use all sequences vs shuffled background
+runDreme(all_sequences, control = "shuffle")
 
+# for each response category, discover motifs against a shuffled background set
+# Produces:
+#  - Increasing vs Shuffled Increasing
+#  - Decreasing vs Shuffled Decreasing
+#  - Static vs Shuffled Static
+runDreme(sequences_by_response, control = "shuffle")
+
+# Search for motifs enriched in the "Increasing" peaks relative to "Decreasing" peaks
+# Produces:
+#  - Increasing vs Decreasing
+runDreme(sequences_by_response$Increasing, control = sequences_by_response$Decreasing)
+
+# Use the "Static" response category as the control set to discover motifs 
+# enriched in each remaining category relative to static sites,
+# Produces:
+#  - Increasing vs Static
+#  - Decreasing vs Static
+runDreme(sequences_by_response, control = "Static")
+
+# Combine the "Static" and "Increasing" sequences and use as a background set to
+# discover motifs enriched in the remaining categories relative
+# Produces:
+#  - Decreasing vs Static+Increasing
+runDreme(sequences_by_response, control = c("Static", "Increasing"))
+```
+
+In order to discover motifs associated with dynamic changes to chromatin
+accessibility, we use static sites as the control set to discover motifs
+enriched in both increasing and decreasing sites.
+
+```{r, eval=F}
+dreme_vs_static <- runDreme(sequences_by_response, control = "Static")
+```
+
+```{r, echo=FALSE}
+# I secretly cache this to decrease build-time of the manuscript
+drake::loadd(dreme_vs_static)
+```
+
+```{r, fig.height=4, fig.width=7, echo = FALSE}
+dreme_fig_top <- purrr::map(dreme_vs_static, "motif") %>% 
+  purrr::map(universalmotif::view_motifs) %>% 
+  purrr::imap(~{
+    .x +
+      ggtitle(paste(.y, "Motifs")) +
+      theme(plot.title = element_text(hjust = 0.5, size = 14))
+  }) %>% 
+  patchwork::wrap_plots(ncol = 2) 
+```
+```{r, echo=FALSE}
+
+# Require that the minimum overlap for similarity metric is equal to the
+# smallest possible overlap if the shortest motif was completely contained
+# within the largest motif.
+get_min_overlap <- function(df){
+  min(df$length) / max(df$length)
+}
+
+get_motif_correlation <- function(df, method = "PCC"){
+  df$motif %>% 
+    universalmotif::compare_motifs(min.overlap = get_min_overlap(df), method = method)
+}
+
+plot_correlation_heatmap <- function(mat, name){
+  
+  min_color <- round(min(mat) - 0.1, digits = 1)
+  colors <- circlize::colorRamp2(c(min_color, 1), c("white", "dodgerblue3"))
+  
+  rownames(mat) <- NULL
+  ComplexHeatmap::Heatmap(mat,
+                          col = colors, 
+                          name = "Pearson Correlation", 
+                          column_names_rot = 45,
+                          column_title = paste(name, "Motif Similarity")
+                          )
+  
+}
+```
+
+```{r, fig.height=5, fig.width=10, echo = FALSE}
+dreme_fig_bottom <- dreme_vs_static %>% 
+  purrr::map(get_motif_correlation) %>% 
+  purrr::imap(plot_correlation_heatmap) %>% 
+  # capture heatmaps as grobs
+  purrr::map(~{grid::grid.grabExpr(draw(.x))}) %>% 
+  patchwork::wrap_plots(nrow = 1) 
+```
+
+These data are readily visualized using the `universalmotif::view_motifs`
+function. Visualization of the results reveals two distinct motifs associated
+with decreasing and increasing sites \ref{fig:dec_v_inc_dreme}. In this
+analysis, the *de-novo* discovered motifs within each category appear visually
+similar to each other, however, the MEME Suite does not provide a mechanism to
+compare groups of motifs based on all pairwise similarity metrics. We utilized
+the `universalmotif::compare_motifs` function to compute Pearson correlation
+coefficients for each set of motifs to quantitatively assess motif similarity
+\ref{fig:dec_v_inc_dreme}. 
+
+```{r dec_v_inc_dreme, fig.height=10, fig.width=10, echo=F, fig.cap="\\label{fig:dec_v_inc_dreme}PWMs of discovered motifs in Decreasing (A) and Increasing (B) sites. C,D Pearson correlation heatmaps comparing similarity of Decreasing (C) and Increasing (D) motifs."}
+patchwork::wrap_plots(dreme_fig_top, dreme_fig_bottom, ncol = 1) +
+  patchwork::plot_annotation(tag_levels = "A")
+```
 Transcription factors often bind with sequence specificity to regulate activity
 of nearby genomic elements. Therefore, comparison of *de-novo* motifs with known
 DNA binding motifs for transcription factors can be a key step in identifying
-regulators of genomic elements.
+regulators of genomic elements. The TomTom tool is used to compare unknown
+motifs against a list of known motifs to identify matches, `memes` provides the
+`runTomTom` function as an interface to this tool. By passing the results from
+`runDreme` into `runTomTom` and searching within a database of *Drosophila* transcription
+factor motifs, we can identify candidate transcription factors which may bind
+the motifs associated with increasing and decreasing chromatin accessibility.
 
-The TomTom tool is used to compare unknown motifs against a list of known motifs
-to identify matches. By passing the results from DREME into TomTom and searching
-within a database of *Drosophila* transcription factor motifs, we can identify
-candidate transcription factors which may also bind at E93 ChIP peaks. A major
-limitation of this approach is that transcription factors containing similar
-families of DNA binding domain often possess highly similar motifs, making it
-difficult to identify the "true" binding factor of a discovered motif.
-Additionally, when searching for matches against a motif database, TomTom must
-account for multiple testing, therefore using a larger than necessary motif
-database can produce a large multiple testing penalty, limiting sensititity of
-detection. One way to overcome these limitations is to limit the transcription
-factor motif database to include only motifs for transcription factors expressed
-in the sample of interest. Accounting for transcription factor expression during
-motif analysis has been demonstrated to  increase the probability of identifying
-biologically relevant transcription factor candidates \cite{hector franco's STAR paper, others?}.
+```{r}
+dreme_vs_static_tomtom <- runTomTom(dreme_vs_static, database = "data/flyFactorSurveyCleaned.meme", dist = "ed")
+```
+Using this approach, the results can be visualized using 
+the `view_tomtom_hits()` function to visually inspect the matches
+assigned by TomTom, providing a simple way to assess the quality of the match. 
+A representative plot of these data is shown in \ref{fig:tomtom_example}, while
+the full results can be viewed in \ref{tab:tomtom_table}. We
+uncover that the motifs associated with decreasing sites are highly similar to
+the E93 motif. Conversely, motifs found in increasing sites match the
+transcription factors br, l(3)neo38, gl, and lola \ref{tab:tomtom_table}. These
+data support the hypothesis that E93 binding to its motif may play a larger role
+in chromatin closing activity, while binding of the transcription factor br is
+associated with chromatin opening.
+```{r tomtom_example, fig.height=3, fig.width=7.5, fig.cap="\\label{fig:tomtom_example}Representative plots generated by view_tomtom_hits showing the top hit for motifs discovered in decreasing (A) and increasing (B) peaks."}
+plot_top_hit <- function(x){
+  x %>% 
+    view_tomtom_hits(1)
+}
+
+top_hit_grid <- function(x, title){
+  x %>% 
+    patchwork::wrap_plots(nrow = 1)
+}
+
+# Plotting every hit:
+# decided to just use a representative sample insted
+#dreme_vs_static_tomtom %>% 
+#  purrr::imap(~{plot_top_hit(.x) %>% top_hit_grid(., .y)}) %>% 
+#  patchwork::wrap_plots(ncol = 1)
+
+dreme_vs_static_tomtom %>% 
+  purrr::imap(~{
+    .x %>% 
+      dplyr::mutate(name = paste0(.y, " ", name)) %>% 
+      update_motifs() %>% 
+      plot_top_hit() %>% 
+      .[[2]]
+    }) %>% 
+  patchwork::wrap_plots() +
+    patchwork::plot_annotation(tag_levels = "A")
+```
+```{r}
+library(gt)
+
+dreme_vs_static_tomtom %>% 
+  dplyr::bind_rows(.id = "category") %>% 
+  dplyr::mutate(category = paste(category, "Motifs")) %>% 
+  dplyr::arrange(category, rank) %>% 
+  dplyr::select(category, name, best_match_altname) %>% 
+  dplyr::rename("Best Match TF" = best_match_altname) %>% 
+  gt(rowname_col = "name",
+     groupname_col = "category",
+     lab = "tab:tomtom_table") 
+  
+  
+```
+
+
+
+## Motif enrichment testing using runAme
+
+Discovery and matching of *de-novo* motifs is only one way to find candidate
+transcription factors within target sites. Indeed, in many instances, requiring
+that a motif is recovered *de-novo* is not ideal, as these approaches are
+"discovery based" as opposed to hypothesis driven. Another approach, implemented
+by the AME tool, is to search for known motif instances in target sequences and
+test for their overrepresentation relative to a background set of sequences
+\cite{ame}. The `runAme()` function is the `memes` interface to the AME tool. It
+accepts a set of sequences as input an control sets, and will peform enrichment
+testing using a provided motif database for occurrances of each provided motif.
+
+A major limitation of this approach is that transcription factors containing
+similar families of DNA binding domain often possess highly similar motifs,
+making it difficult to identify the "true" binding factor associated with an
+overrepresented motif. Additionally, when searching for matches against a motif
+database, AME must account for multiple testing, therefore using a larger than
+necessary motif database can produce a large multiple testing penalty, limiting
+sensitivity of detection. One way to overcome these limitations is to limit the
+transcription factor motif database to include only motifs for transcription
+factors expressed in the sample of interest. Accounting for transcription factor
+expression during motif analysis has been demonstrated to increase the
+probability of identifying biologically relevant transcription factor candidates
+\cite{hector franco's STAR paper, others?}.
 
 The `memes` universalmotif data.frame structure can be used to integrate
-expression data with a motif database. First, we import a pre-filtered list of
-genes expressed in a timecourse of **Drosophila** wing development.
+expression data with a motif database to remove entries for transcription
+factors which are not expressed. To do so, we import a *Drosophila*
+transcription factor motif database generated by the Fly Factor Survey and
+convert to universalmotif data.frame format \cite{fly factor}. In this database,
+the `altname` column stores the gene symbol.
 
 ```{r}
-rna_counts <- read.csv("data/wing_expressed_genes.csv", stringsAsFactors = FALSE)
-```
-```{r, echo = FALSE}
-head(rna_counts)
-```
-
-Next we import a database of known *Drosophila* transcription factor motifs
-generated from the Fly Factor Survey in `universalmotif` format, and convert to a data.frame format using `as_universalmotif_dataframe()` \cite{fly factor}.
-```{r}
-flyFactor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
+fly_factor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
   as_universalmotif_dataframe()
 ```
 ```{r, echo = FALSE}
-head(flyFactor, 5)
+head(fly_factor, 3)
+```
+Next, we import a pre-filtered list of genes expressed in a timecourse of
+**Drosophila** wing development.
+```{r}
+wing_expressed_genes <- read.csv("data/wing_expressed_genes.csv")
 ```
 
+```{r, echo = FALSE}
+n_fly_factor_expressed <- fly_factor %>% 
+  dplyr::filter((altname %in% wing_expressed_genes$symbol)) %>% 
+  nrow()
+n_fly_factor_unexpressed <- fly_factor %>% 
+  dplyr::filter(!(altname %in% wing_expressed_genes$symbol)) %>% 
+  nrow()
+```
+
+Finally, we subset the motif database to only expressed genes using `dplyr`
+data.frame subsetting syntax (note that base R subsetting functions operate
+equally well on these data structures), then convert the data.frame back into
+`universalmotif` format using `as_universalmotif`. This filtering step removes
+`r (n_fly_factor_unexpressed / nrow(fly_factor)) %>% {. * 100} %>% round()`% of
+entries from the original database, greatly reducing the multiple-testing
+correction.
 
 ```{r}
-tomtom_results <- runTomTom(all_dreme_res, database = "data/flyFactorSurveyCleaned.meme", dist = "ed")
+fly_factor_expressed <- fly_factor %>% 
+  dplyr::filter(altname %in% wing_expressed_genes$symbol) %>% 
+  as_universalmotif()
 ```
-Here we visualize the top 3 matches from TomTom for each *de-novo* motif using
-`view_tomtom_hits()`. Results are plotted in descending order according to match
-score. The results of this function can be integrated into additional R graphics
-libraries, such as `patchwork` or `cowplot` to generate publication-quality
-figures \cite{patchwork, cowplot}.
-```{r, fig.height=5, fig.width=12}
-tomtom_results %>% 
-  view_tomtom_hits(3) %>% 
-  patchwork::wrap_plots(., nrow = 1, tag_level = "new") +
+
+`runAme` syntax is identical to `runDreme` in that discriminative designs can be
+constructed by calling list entries by name. Data can be visualized using
+`ame_plot_heatmap()`, revealing that the E93 motif is strongly enriched at
+Decreasing sites, while l(3)neo38, lola, and br are enriched in Increasing
+sites, supporting the *de-novo* discovery results \ref{fig:ame_heatmap}.
+Additionally, AME detects several other transcription factor motifs which
+distinguish decreasing and increasing sites, providing additional clues to
+potential factors which also bind E93 ChIP peaks to affect chromatin
+accessibility.
+```{r}
+ame_vs_static <- runAme(sequences_by_response, control = "Static", database = fly_factor_expressed)
+```
+
+```{r ame_heatmap, fig.height=3, fig.width=7.5, echo = FALSE, fig.cap="\\label{fig:ame_heatmap} A heatmap of the -log10(adj.pvalues) from AME enrichment testing within increasing and decreasing sites."}
+ame_vs_static %>% 
+  dplyr::bind_rows(.id = "category") %>% 
+  dplyr::mutate(category = paste0(category, "\nAccessibility")) %>% 
+  dplyr::group_by(category, motif_alt_id) %>% 
+  dplyr::filter(adj.pvalue == min(adj.pvalue)) %>% 
+  ame_plot_heatmap(group = category, id = motif_alt_id) +
+    labs(x = "Transcription Factor",
+         y = "ChIP Peak Type")
+```
+### Motif matching using runFimo
+
+A striking result from these analysis is that the E93 motif is so strongly
+enriched within E93 ChIP peaks which decrease in accessibility. Significance of
+motif enrichment can be driven by several factors, such as quality of the query
+motif relative to the canonical motif or differences in motif number in one
+group relative to other groups. These questions can be explored directly by
+identifying motif occurrances in target regions and examining their properties.
+FIMO allows users to match motifs in input sequences while returning information
+about the quality of each match in the form of a quantitative score \cite{fimo}. 
+
+In order to examine the properties of the E93 motif between different ChIP
+peaks, we scan all E93 ChIP peaks for matches to the Fly Factor Survey E93 motif
+using `runFimo`. Results are returned as a GRanges object containing the
+positions of each motif. Setting `skip_matched_sequence` to `FALSE` adds the
+sequence of the detected motif to the output.
+
+```{r}
+e93_fimo <- runFimo(all_sequences, fly_factor_expressed$Eip93F_SANGER_10, skip_matched_sequence = FALSE, thresh = 1e-3)
+```
+
+Using `plyranges`, matched motifs can be joined with the metadata of the ChIP peaks with which they intersect.
+```{r}
+e93_fimo %<>% 
+  plyranges::join_overlap_intersect(chip_results)
+```
+
+```{r, echo=F}
+e93_stack <- e93_fimo %>% 
+  data.frame %>%  
+  split(.$e93_chromatin_response) %>% 
+  purrr::imap(~{
+    universalmotif::create_motif(.x$matched_sequence, name = paste(.y, "E93"))
+  }) %>% 
+  rev %>% 
+  {
+    m <- .
+    e93_flyfactor <- fly_factor_expressed$Eip93F_SANGER_10
+    e93_flyfactor@name <- "E93 FlyFactorSurvey"
+    
+    m$e93 <- e93_flyfactor
+    return(m)
+  } %>% 
+  rev %>% 
+  universalmotif::view_motifs()
+```
+```{r, echo=F}
+n_motifs <- chip_results %>% 
+  plyranges::mutate(has_match = ifelse(. %over% e93_fimo, "Match", "No Match")) %>% 
+  data.frame %>% 
+  ggplot(aes(e93_chromatin_response)) +
+    geom_bar(aes(fill = forcats::fct_rev(has_match)), position = "fill") +
+     scale_fill_manual(values = c("Match" = "firebrick",
+                                  "No Match" = "Black")) +
+     labs(fill = "E93 Motif Match",
+          y = "Fraction of Sites",
+          x = "Response to E93 binding") 
+```
+```{r, fig.height=5, fig.width=3, echo=F}
+motif_quality <- e93_fimo %>% 
+  data.frame %>% 
+  ggplot(aes(e93_chromatin_response, score)) +
+    geom_boxplot(aes(fill = e93_chromatin_response), notch = TRUE) +
+    theme_bw() +
+    labs(y = "FIMO Score",
+         x = "Chromatin Response in E93 ChIP Peak") +
+    theme(legend.position = "none")
+```
+
+Using this approach we can deeply examine the properties of the E93 motif within
+each chromatin response category. First, by counting the number of E93 motifs
+within each category, we demonstrate that Decreasing sites are more likely than
+increasing or static sites to contain an E93 motif \ref{fig:fimo}A. We extend
+these observations by rederiving position-weight matrices from sequences
+matching the E93 motif within each category, allowing visual inspection of motif
+quality across groups \ref{fig:fimo}B. Notably, differences in quality at base
+positions 8-12 appear to distinguish increasing from decreasing motifs, where
+decreasing motifs are more likely to have strong A bases at positions 8 and 9,
+while E93 motifs from increasing sites are more likely to have a T base pair at
+position 12 \ref{fig:fimo}B. Examination of bulk FIMO scores (where higher
+scores represent motifs more similar to the reference) also reveals differences
+in E93 motif quality between groups, in particular, E93 motifs from Decreasing
+sites have higher scores \ref{fig:fimo}C. Together, these data demonstrate that
+a key distinguishing factor between whether a sites will decrease or increase in
+chromatin accessibility following E93 binding is the number and quality of E93
+motifs at that site. 
+
+In summary, `memes` establishes a powerful motif analysis environment by
+leveraging the speed and utility of the MEME Suite set of tools in conjunction
+with the flexible and extensive R/Bioconductor package landscape.
+```{r fimo, fig.width=7.5, fig.height=9, fig.cap="\\label{fig:fimo}A. Stacked barplot showing fraction of each chromatin response category containing E93 motif matches. B. PWMs generated from E93 motif sequences detected in each chromatin response category. C. Boxplot of FIMO Score for each E93 motif within each chromatin response category. Outliers are plotted as distinct points."}
+#patchwork::wrap_plots(n_motifs, motif_quality, patchwork::guide_area(), e93_stack, widths = c(0.2, 0.3, 0.5))
+patchwork::wrap_plots(n_motifs, patchwork::guide_area(), 
+                      e93_stack, motif_quality, 
+                      ncol = 2, widths = c(0.6, 0.4),
+                      guides = 'collect') +
     patchwork::plot_annotation(tag_levels = "A")
 ```
-## Replace above chunks with sections below 
-(rstudio crashed without saving)
---------------
-Next we import a database of known *Drosophila* transcription factor motifs
-generated from the Fly Factor Survey in `universalmotif` format, and convert to a data.frame format using `as_universalmotif_dataframe()` \cite{fly factor}.
-```{r}
-fly_factor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
-				  as_universalmotif_dataframe()
-	```
-	```{r, echo = FALSE}
-	head(fly_factor, 5)
-	```
 
-The motif database can be subsequently filtered to include only those entries
-which match an expressed gene. After filtering, the database is converted back
-to `universalmotif` format using `as_universalmotif`.
-```{r}
-# in this database, altname stores the gene symbol
-fly_factor_expressed <- fly_factor %>% 
-				  dplyr::filter(altname %in% expressed_genes$symbol) %>% 
-					  as_universalmotif()
-		```
-
-Passing the results object from *de-novo* discovery with `runDreme` and the
-filtered motif database to `runTomTom`
-```{r}
-tomtom_results <- runTomTom(all_dreme_res, database = fly_factor_expressed, dist = "ed")
-tomtom_results <- runTomTom(all_dreme_res, database = fly_factor, dist = "ed")
-```
-
-----------------
-
-
-
-
- - prepare database
-  - filter FPKM counts, note this needs to be chosen empirically and is not always a good idea,
-  - we do this for demonstration purposes only
- - Denovo discovery in sensitivity categories (static as background)
-  - TOMTOM matching, view_match_motifs(3)
-    - try patchwork to combine them into figure
- - AME Across binding groups
-  - reduce redundant hits
-  - plot heatmap
- - FIMO within sensitivity
-  - rederive PWM for E93 within sites
-   - note differences in specific bases
-
-  
 # Availability and Future developments:
- - packge source code: `github.com/snystrom/memes`
- - documentation website: `snystrom.github.io/memes`
- - docker container: `https://hub.docker.com/r/snystrom/memes_docker`
- - singularity container: `???`
 
-### Future Features:
- - Additional meme suite tools
- - more data visualizations
- - better support for PSP generation
- - Better support for amino-acid sequence usage (please contact us with feature requests)
- 
+The `memes` package source code and installation instructions are available on
+github: [github.com/snystrom/memes](github.com/snystrom/memes). Documentation is
+stored in the package vignettes, and also available at the package website:
+[snystrom.github.io/memes](snystrom.github.io/memes). The `memes_docker`
+containers are available from DockerHub
+[https://hub.docker.com/r/snystrom/memes_docker](https://hub.docker.com/r/snystrom/memes_docker),
+and their source code is hosted at github:
+[https://github.com/snystrom/memes_docker](https://github.com/snystrom/memes_docker).
+
+This manuscript was automatically generated using Rmarkdown within the
+`memes_docker` container (TODO: ADD VERSION). Its source code, raw data, and
+instructions to reproduce all analysis can be found at
+[github.com/snystrom/memes_paper/](github.com/snystrom/memes_paper/).
+
+In the future we hope to add additional data visualizations for examining motif
+positioning within features. We will continue to add support for additional MEME Suite
+tools in future versions of the package. Finally, we hope to improve the `memes`
+tooling for analyzing amino-acid motifs, which although fully supported by our
+current framework, may require extra tools which we have not considered.
+
 # Acknowledgements
- - Sean Davis automated docker builds
- - Megan Justice, feedback, feature requests
+We would like to acknowledge Megan Justice, and members of the McKay lab for
+helpful comments and feedback.
