@@ -1,20 +1,20 @@
 ---
-title: '{memes}: an R interface to the MEME Suite'
+title: 'Memes: an R interface to the MEME Suite'
 author:
-- ORCID: null
+- ORCID: 0000-0003-1000-1579
   name: Spencer L. Nystrom
 - name: Daniel J. McKay
 output: 
- - word_document:
-   fig.caption: yes
+ - word_document
 ---
 
-```{r setup, echo = FALSE}
+```{r setup, echo = FALSE, warning=FALSE, message=FALSE}
 # Figure caption: https://stackoverflow.com/questions/31926623/figures-captions-and-labels-in-knitr
 suppressPackageStartupMessages(library(memes))
 suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(GenomicRanges))
 suppressPackageStartupMessages(library(ggplot2))
+suppressPackageStartupMessages(library(ComplexHeatmap))
 drake::r_make()
 ```
 
@@ -131,18 +131,18 @@ accepted set of tools with over 22,000 citations to date, and over 30,000 unique
 users of the webserver implementation annually \cite{meme-usage-report-page,
 google-scholar-meme}. 
 
-The MEME Suite family of tools provides a
-comprehensive set of utilities to interrogate motif content across a broad range
-of biological contexts. However, several factors limit the full potential of
-these tools for use in data analysis. 
-  1) must do significant preprocessing to get data in correct input format
-    - written to analyze 1 group of sequences, not amenable to multigroup designs
-    - no common patterns for generating inputs from ChIP-seq whose data are primarily range based
-  2) Easily parseable output data often doesn't contain all information
-    - ex tomtom alternative hits in .tsv output only present in IUPAC format, not matrix
-      - matrix is present in XML file, but no tools exist to parse this
-  3) limited data visualization capabilities
-  4) difficult to integrate data with additional sources
+The MEME Suite family of tools provides a comprehensive set of utilities to
+interrogate motif content across a broad range of biological contexts. However,
+several factors limit the full potential of these tools for use in data
+analysis. MEME Suite tools require carefully formatted inputs to achieve full
+functionality, yet few tools exist to simplify the process of data formatting,
+requiring instead that users write custom code to prepare their data.
+Furthermore, the output data from each MEME Suite tool often have complex
+structures which must be parsed to extract the full suite of information, again
+requiring users to write custom code for this task. Finally, although the
+data-generation capabilities of the MEME Suite are excellent, the tools lack
+powerful ways to visualize the results. These factors act as barriers to
+adoption and preclude deep analysis of the data. 
 
 Here we present `memes`, a motif analysis package which provides a seamless
 interface to MEME Suite tools within R. `memes` uses base R and Bioconductor
@@ -151,7 +151,7 @@ common analysis tools like the `tidyverse` and other Bioconductor packages.
 Unlike the commandline implementation, `memes` outputs also function as inputs
 to other MEME Suite tools, allowing simple construction of motif analysis
 pipelines without additional data processing steps. Additionally, R/Bioconductor
-data structures provide a full-featured representaiton of MEME Suite output
+data structures provide a full-featured representation of MEME Suite output
 data, providing users quick access to all relevant data structures with simple
 syntax. 
 
@@ -181,15 +181,9 @@ The core functionality of `memes` revolves around the interface to MEME Suite
 tools. Each supported MEME Suite tool is assigned a `run` function
 (`runDreme()`, `runMeme()`, `runAme()`, `runFimo()`, `runTomTom()`), which
 accept sequence and motif inputs as needed and any valid commandline flags as
-additional function parameters.
+additional function parameters. A full list of currently supported MEME Suite
+tools and their function is found in \ref{tab:tool_function}.
 
-**Describe each tool briefly?**
- - This could also be relegated to a table
-
-**table of comparison to commandline software?**
-  - input type:
-  - output type:
-  
 ### Data Structures
 
 MEME Suite tools are run on the commandline and use files stored on-disk as
@@ -224,6 +218,7 @@ for use in R.
  - **NOTE: Biopython has a MEME/MAST parser but it works on tsv https://biopython.org/docs/1.74/api/Bio.motifs.meme.html**
  - **Actually, they merged XML import in March: https://github.com/biopython/biopython/pull/2354**
  - **Need to revise above statement, but note that most tools don't have support**
+ - ? To our knowledge, no publicly available tools exist to parse XML formatted data from all MEME Suite tools ...
 
 Many of the MEME Suite tools, such as MEME, DREME, or TomTom return data which
 describe properties of motifs. For example, MEME and DREME return de-novo
@@ -263,7 +258,6 @@ within the preexisting R framework.
 
 ### Support for genomic range-based data
 
-# RETURN
 Motif analysis is important for assays like ChIP-seq which store data as genomic
 coordinates, not sequence. This is in conflict with MEME Suite which is designed
 to study sequences. Therefore, users must write custom code to extract DNA
@@ -316,19 +310,31 @@ The MEME Suite provides a small set of data visualizations which have limited
 customizability. `memes` leverages the advantages of the R graphics environment
 to provide novel data visualizations which are infinitely customizable by the user. 
 
- - `view_motifs()` plots motif as stack (if I decide to add this feature... need to think about this)
- - `ame_plot_heatmap` plot clustered heatmap of AME results 
-   - `ame_compare_heatmap_methods` compare nonlinearity of data visualization in heatmap form
- - `view_tomtom_hits` visualize and compare TomTom matches to assess match quality
-   - `force_best_match` can be used to update "best" match demonstrating how data visualization can be useful for data curation
+The TomTom tool allows users to compare unknown motifs to a set of known motifs
+to identify a best match. Visual inspection of motif comparison data is a key
+step in assessing the quality and correctness of a match. The `view_tomtom_hits`
+function allows users to compare query motifs with the list of potential matches
+as assigned by TomTom. Often, matching tools are useful for reducing the
+search-space for potential candidates, but users are free to leverage their
+understanding of the biology to override these matches. The `force_best_match`
+function allows users to quickly reassign the TomTom best match to a
+lower-ranked, but still statistically significant match to ease downstream data
+processing.
 
 The AME tool searches for enrichment of motifs within groups of sequences
 relative to a control set. The meaningful result from this tool is the
 statistical parameter (for example, a p-value) associated with the significance
 of motif enrichment. However, AME does not provide a mechanism for visualizing
-these results. Additionally, AME is often used 
-## RETURN
-
+these results. Additionally, AME is often used to examine motif content of
+multiple groups of sequences, therefore a plot which can represent statistical
+significance and group membership of a motif match could be a useful way of
+visualizing the data. `memes` visualized AME results with the `ame_plot_heatmap`
+function, which returns a `ggplot2` formatted heatmap comparing motif
+significance within one or multiple groups. Several options exist to customize
+the heatmap values to help capture different aspects of the output data. The
+`ame_compare_heatmap_methods()` function enables users to compare the
+distribution of values between samples in order to select a threshold which
+accurately captures the dynamic range of their results.
 
 ## Containerized analysis maximizes availability and facilitates reproducibility
 `memes` relies on a locally installed version of the MEME Suite which is
@@ -547,7 +553,7 @@ transcription factors br, l(3)neo38, gl, and lola \ref{tab:tomtom_table}. These
 data support the hypothesis that E93 binding to its motif may play a larger role
 in chromatin closing activity, while binding of the transcription factor br is
 associated with chromatin opening.
-```{r tomtom_example, fig.height=3, fig.width=7.5, fig.cap="\\label{fig:tomtom_example}Representative plots generated by view_tomtom_hits showing the top hit for motifs discovered in decreasing (A) and increasing (B) peaks."}
+```{r tomtom_example, echo = F, fig.height=3, fig.width=7.5, fig.cap="\\label{fig:tomtom_example}Representative plots generated by view_tomtom_hits showing the top hit for motifs discovered in decreasing (A) and increasing (B) peaks."}
 plot_top_hit <- function(x){
   x %>% 
     view_tomtom_hits(1)
@@ -575,7 +581,7 @@ dreme_vs_static_tomtom %>%
   patchwork::wrap_plots() +
     patchwork::plot_annotation(tag_levels = "A")
 ```
-```{r}
+```{r, echo=F}
 library(gt)
 
 dreme_vs_static_tomtom %>% 
@@ -585,8 +591,10 @@ dreme_vs_static_tomtom %>%
   dplyr::select(category, name, best_match_altname) %>% 
   dplyr::rename("Best Match TF" = best_match_altname) %>% 
   gt(rowname_col = "name",
-     groupname_col = "category",
-     lab = "tab:tomtom_table") 
+     groupname_col = "category")
+     # this feature is in development branch??
+     # search SO: gt table reference
+     #lab = "tab:tomtom_table") 
   
   
 ```
