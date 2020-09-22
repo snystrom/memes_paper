@@ -13,6 +13,7 @@ my_plan <- drake_plan(
     dplyr::group_by(symbol) %>%
     dplyr::filter(max(fpkm) != 0),
   
+  
   filtered_rnaseq = full_rnaseq %>% 
     dplyr::group_by(symbol) %>% 
     dplyr::filter(max(fpkm) > 5) %>% 
@@ -20,6 +21,12 @@ my_plan <- drake_plan(
     unique(),
   
   write_parsed_rna = readr::write_csv(filtered_rnaseq, path = file_out("data/wing_expressed_genes.csv")),
+  
+  max_expression_rnaseq = full_rnaseq %>% 
+    dplyr::group_by(symbol) %>% 
+    dplyr::filter(fpkm == max(fpkm)) %>% 
+    dplyr::select(-time) %>% 
+    dplyr::ungroup(),
   
   chip_peaks = readr::read_csv(chip_path, col_types = c("chr" = "c",
                                                         "start" = "d",
@@ -41,14 +48,20 @@ my_plan <- drake_plan(
     plyranges::shift_right(.$summit_position) %>% 
     plyranges::select(id, e93_chromatin_response),
   
+  # ChIP summits are extended to 100bp regions for analysis
   chip_results = chip_summits %>% 
     plyranges::anchor_center() %>% 
-    plyranges::mutate(width = 100)
+    plyranges::mutate(width = 100),
   
-  #genome = BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3,
+  
+  genome = BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3,
+  
+  sequences_by_response = chip_results %>% 
+    split(mcols(.)$e93_chromatin_response) %>% 
+    memes::get_sequence(genome),
+  
+  dreme_vs_static = runDreme(sequences_by_response, control = "Static"),
   #
-  #all_seq = chip_results %>% 
-  #  memes::get_sequence(genome),
   #
   #all_dreme_res_full = memes::runDreme(all_seq, control = "shuffle", nmotifs = 3)
   
