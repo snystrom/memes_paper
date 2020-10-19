@@ -20,22 +20,22 @@ drake::r_make()
 
 # Bioconductor Abstract (300 words)
 
-Biopolymers, such as DNA and protein, perform varying functions based on their
+Biopolymers, such as DNA and protein molecules, perform varying functions based on their
 primary sequence. Short, repeated sequences, or "motifs" represent functional
-units within biopolymers which can act as interaction surfaces, create
+units within biopolymers that can act as interaction surfaces, create
 structure, or have enzymatic activity. Identification of shared motifs across
-multiple sequences can provide evidence for shared function, thus the ability to
+multiple sequences can provide evidence for shared function. Thus, the ability to
 identify, classify, and compare motifs represents a key step in the analysis of
-biological sequences. Although tools implementing these features exist within
-Bioconductor, they often rely on proprietary data types with poor
-interoperability with other tools. Furthermore, several of these packages will
-be deprecated in the next Bioconductor release, leaving a gap in functionality
-with no clear alternatives. 
+biological sequences. **TODO: Transition sentence RE: R/motifs** Although tools
+implementing these features exist within Bioconductor, they often rely on
+proprietary data types with poor interoperability with other tools. **TODO: remove this sentence?** Furthermore,
+several of these packages will be deprecated in the next Bioconductor release,
+leaving a gap in functionality with no clear alternatives.
 
-The MEME Suite is a series of commandline tools which provide a variety of
+The MEME Suite is a series of commandline tools that provide a variety of
 features for motif analysis including *de-novo* motif discovery, enrichment
 testing, comparison, and matching. Here we present `memes`, a motif analysis
-package which provides a seamless interface to MEME Suite tools within R.
+package that provides a seamless interface to MEME Suite tools within R.
 
 `memes` uses standard R and Bioconductor data types for better integration with
 common analysis tools like the `tidyverse` and `GRanges`. `memes` outputs also
@@ -46,16 +46,16 @@ In addition to wrapping MEME Suite utilities, `memes` extends the functionality
 of `universalmotif` to provide base R and `tidyverse` compatible syntax for
 manipulating and analyzing motif metadata. These features allow motif databases
 to integrate external data to aid analysis, such as filtering a set of
-transcription factor motifs based on gene expression. `memes` also provides
+transcription factor motifs based on gene expression. Lastly, `memes` also provides
 simple utilities for data visualization.
 
 `memes` is designed for maximum flexibility and ease of use to allow rapid
 iteration during analysis. Here we present several examples of how `memes`
-allows novel analyses of ChIP and FAIRE-seq data by facilitating seamless
+allows novel analyses of ChIP-seq and FAIRE-seq data by facilitating seamless
 interoperability between MEME Suite tools and the broader R landscape.
 
 
-# Abstract Draft
+# Abstract Draft (OLD: delete??)
 Biopolymers, such as DNA and protein, perform varying functions based on their
 primary sequence. Short, repeated sequences, or "motifs" represent functional
 units within biopolymers which can act as interaction surfaces, create
@@ -112,22 +112,23 @@ Bioconductor is deprecating PWMEnrich (~AME) and MotIV (~TomTom), `memes` can fi
 
 
 
-Biopolymers, such as DNA and protein, perform varying functions based on their
-primary sequence. Short, repeated sequences, or "motifs" represent functional
-units within biopolymers which can act as interaction surfaces, create
-structure, or have enzymatic activity. Identification of shared motifs across
-multiple sequences can provide evidence for shared function, thus the ability to
-identify, classify, and compare motifs represents a key step in the analysis of
-biological sequences. Although tools that implement these features have
-historically existed in the Bioconductor landscape, they often rely on
-proprietary data types with poor interoperability with other tools. Furthermore,
-several of these packages will be deprecated in the next Bioconductor release,
-leaving a gap in functionality with no clear alternatives.
+Biopolymers, such as DNA and protein molecules, perform varying functions based
+on the composition of their primary sequence. Short, repeated sequences, or
+"motifs" represent functional units within biopolymers which can act as
+interaction surfaces, create structure, or have enzymatic activity.
+Identification of shared motifs across multiple sequences can provide evidence
+for shared function, thus the ability to identify, classify, and compare motifs
+represents a key step in the analysis of biological sequences. Although tools
+that implement these features have historically existed in the Bioconductor
+landscape, they often rely on proprietary data types with poor interoperability
+with other tools. Furthermore, several of these packages will be deprecated in
+the next Bioconductor release, leaving a gap in functionality with no clear
+alternatives.
 
-The MEME Suite is a series of commandline and web-based tools which provide a variety
+The MEME Suite is a series of commandline and web-based tools that provide a variety
 of features for motif analysis such as *de-novo* motif discovery, enrichment
 testing, comparison, and matching \cite{meme-suite}. The MEME Suite is a widely
-accepted set of tools with over 22,000 citations to date, and over 30,000 unique
+utilized set of tools, with over 22,000 citations to date, and greater than 30,000 unique
 users of the webserver implementation annually \cite{meme-usage-report-page,
 google-scholar-meme}. 
 
