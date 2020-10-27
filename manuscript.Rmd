@@ -175,6 +175,7 @@ functions.
 
 ### structured data.frames hold multidimensional output data
 
+# CONTINUE
  - as mentioned previously, the multidimensional naature of meme results is difficult to represent
  - Output data usually contain motifs & descriptive statistics about those motifs
  - motif info can be stored in universalmotif format, however, not enough space for data
@@ -183,7 +184,7 @@ functions.
  - we add nested list columns as needed to link multidimensional data
  - advantage of this approach over an S4 is all normal tools work on it (tidyverse), joins, etc.
 
-Many of the MEME Suite tools return files contianing descriptive
+Many of the MEME Suite tools return files containing descriptive
 properties of motifs. For example, MEME and DREME return de-novo discovered
 motifs from query sequences along with statistical information about their
 enrichment. The `universalmotif` data structure is a powerful R/Bioconductor
