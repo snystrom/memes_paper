@@ -65,17 +65,16 @@ multiple sequences can provide evidence for shared function, for example,
 identification of kinase substrates based on similarities in phosphorylation
 site sequence, or characterizing DNA elements based on shared transcription
 factor binding sequences (TODO: ref kinase motif:
-https://doi.org/10.1016/0968-0004(90)90073-K). Thus the ability to
-identify, classify, and compare motifs represents a key step in the analysis of
-biological sequences. **TODO: R/Bioconductor transition sentence**. Although
-tools that implement these features have historically existed in the
-Bioconductor landscape, they often rely on proprietary data types with poor
-interoperability with other tools, creating barriers to comprehensive motif
-analysis within R. 
-**TODO: fix this section, how to transition?**
-Furthermore, popular motif analysis packages, MotIV, and motifRG 
-will be deprecated in the next Bioconductor release,
-leaving a gap in functionality with no clear alternatives.
+https://doi.org/10.1016/0968-0004(90)90073-K). Thus the ability to identify,
+classify, and compare motifs represents a key step in the analysis of biological
+sequences. **TODO: R/Bioconductor transition sentence**. Although tools that
+implement these features exist in Bioconductor, they often rely on
+proprietary data types or have poor interoperability with other tools, creating
+barriers to comprehensive motif analysis within R. The recent addition of
+`universalmotif` to the Bioconductor landscape partially addresss these issues
+by standardizing motif formats and providing a powerful set of tools for
+examining the properties of motifs, however the Bioconductor motif analysis
+landscape remains incomplete \cite{universalmotif}.
 
 The MEME Suite is a series of commandline and web-based tools that provide a variety
 of features for motif analysis such as *de-novo* motif discovery, enrichment
@@ -114,7 +113,9 @@ manipulating and analyzing motif metadata. These features allow users to
 integrate external data with motif databases to aid analysis, such as filtering
 a set of transcription factor motifs based on gene expression in the tissue of
 interest, then using that filtered set to search for motifs associated with
-expressed factors.
+expressed factors. By maintaining compatability with `universalmotif`, `memes`
+outputs can be readily used in a diverse set of tools beyond the `memes`
+framework.
 
 `memes` also provides simple utilities for data visualization where appropriate.
 Providing R representations of MEME Suite data objects enables generation of
@@ -175,50 +176,75 @@ functions.
 
 ### structured data.frames hold multidimensional output data
 
-# CONTINUE
- - as mentioned previously, the multidimensional naature of meme results is difficult to represent
- - Output data usually contain motifs & descriptive statistics about those motifs
- - motif info can be stored in universalmotif format, however, not enough space for data
- - data.frames do good job of storing data (incl nested data), but cannot store motifs
- - we solve this problem by storing the unviversalmotif inside the data.frame (which is valid R)
- - we add nested list columns as needed to link multidimensional data
- - advantage of this approach over an S4 is all normal tools work on it (tidyverse), joins, etc.
+Data returned from MEME Suite tools are complex and multidimensional, making
+them difficult to represent in a simple data structure. For example, MEME and
+DREME return de-novo discovered motifs from query sequences along with
+statistical information about their enrichment. In this instance, a position
+frequency matrix (PFM) of the discovered motif can be represented as a matrix,
+while the properties of that matrix (e.g. the name of the motif, the E-value
+from the enrichment test, background nucleotide frequency, etc.) must be encoded
+outside of the matrix, while maintaining their relationship to the
+corresponding PFM. However, other MEME Suite tools, such as TOMTOM, which
+compares one motif to a series of several motifs to identify possible matches,
+produce an additional layer of complexity such that input matrices (which
+contain metadata as previously described) can have a one-to-many relationship
+with other motif matrices (again with their own metadata). Thus an ideal
+representation for these data is one which can hold an unlimited number of motif
+matrices and their metadata, contain complex hierarchies, and be easily
+manipulated using standard analysis tools. 
 
-Many of the MEME Suite tools return files containing descriptive
-properties of motifs. For example, MEME and DREME return de-novo discovered
-motifs from query sequences along with statistical information about their
-enrichment. The `universalmotif` data structure is a powerful R/Bioconductor
-representation for motif matrices and their associated metadata
-\cite{universalmotif}.  However, `universalmotif` objects are not ideal for
-performing bulk manipulation or queries of metadata, nor do they support complex
-data structures such as nested elements. Many MEME Suite analysis pipelines
-involve identifying motifs which are further analyzed by multiple tools,
-creating additional metadata which cannot be easily tracked in bulk using
-`universalmotif` format. Thus an ideal representation for these data is one
-which can hold an unlimited amount of metadata, contain complex hierarchies, and
-be easily manipulated using standard analysis tools. `memes` therefore extends
-the `universalmotif` format by providing data.frames holding motif metadata
-which retain links to their `universalmotif` representation. These
-universalmotif data.frames combine the advantages of the `universalmotif`
-framework for motif manipulation with the extensibility and flexibility of R
-data.frames. These `universalmotif` data.frames form the basis for a majority of
-`memes` data outputs. These structures are also valid input types to `memes`
+The `universalmotif` data structure is a powerful R/Bioconductor representation
+for motif matrices and their associated metadata \cite{universalmotif}. However,
+`universalmotif` objects are not ideal for performing bulk manipulation or
+queries of metadata, nor do they support complex data structures such as nested
+elements. R data.frames support nesting arbitrary data types within columns, but
+are not sufficient to properly store motif matrices. In order to create an
+extensible, nested data structure for tracking MEME Suite data, `memes`
+leverages the power of R data.frames and the `universalmotif` format by nesting
+`universalmotif` objects within data.frames. These universalmotif data.frames
+store information about motifs along rows, where each column stores metadata
+associated with a motif, including a `motif` column holding a `universalmotif`
+representation of that motif, which can be manipulated by altering columns of
+the data.frame (described in detail below). Adding one-to-many relationships within this
+structure is trivial, as additional unviersalmotif data.frames can be nested
+within eachother. These universalmotif data.frames form the basis for a majority
+of `memes` data outputs. These structures are also valid input types to `memes`
 functions, and when used as such, output data are appended as new columns to the
-input data, ensuring data provenance.
+input data, ensuring data provenance. Finally, because the universalmotif
+data.frame is just a data.frame, it can be manipulated using base R or
+`tidyverse` functions, just like regular R data.frames, lowering the cognitive
+overhead to interfacing with these structures.
 
 **Figure?: showing how the data.frame connects to universalmotif**
 
-`universalmotif` data.frames are not limited to storing motifs from MEME Suite
+universalmotif data.frames are not limited to storing motifs from MEME Suite
 data, and can additionally be used to examine or manipulate the properties of
-any motif list or database. Using `universalmotif` functions to import motif data,
+any motif list. Using `universalmotif` functions to import motif data,
 the `memes` function `as_universalmotif_dataframe()` converts any `universalmotif` object
-into a `universalmotif` data.frame which can be manipulated using base R or
-`tidyverse` functions, just like regular R data.frames. Manipulation of linked
-metadata columns will result in updating the linked `universalmotif` object when
-calling `update_motifs()` to retain the data.frame structure, or when calling
-`as_universalmotif()` to convert the data.frame back into `universalmotif` format. In
-this way, `memes` enables large-scale motif database manipulation & analysis
-within the preexisting R framework.
+into a `universalmotif` data.frame.  Manipulation of linked metadata columns
+will result in updating the linked `universalmotif` object when calling
+`update_motifs()` to retain the data.frame structure, or when calling
+`as_universalmotif()` to convert the data.frame back into `universalmotif`
+format. In this way, `memes` enables large-scale motif database manipulation &
+analysis within the preexisting R framework.
+
+The universalmotif data.frames generated by memes are not limited to storing
+motifs from MEME Suite data. They can also be used to manipulate or store other
+descriptive properties of motifs from multiple sources. `universalmotif`
+provides several import functions which can convert motifs from external
+databases queried from the `MotifDb` package, or from files in a variety of
+non-meme file formats \cite{motifdb}. Once imported in `universalmotif` format
+the `memes` function `as_universalmotif_dataframe()` converts any
+`universalmotif` object into a universalmotif data.frame. Similar to MEME Suite
+data stored in this format, if changes are made to the linked metadata columns,
+the linked universalmotif object can be updated by calling `update_motifs()` to
+retain the data.frame structure for further analysis, or by calling
+`as_universalmotif()` to convert the data.frame back into universalmotif format,
+discarding columns which cannot be stored within `universalmotif` format.
+Therefore, this data structure empowers users to import and analyze motif lists
+from a diverse set of sources for use with `memes` or simply for manipulating
+motif metadata using common R tools. In this way, memes enables large-scale
+motif database manipulation & analysis within the preexisting R framework.
 
 ### Support for genomic range-based data
 
@@ -227,7 +253,7 @@ as genomic coordinates rather than sequence. However, MEME Suite tools are
 designed to work with sequences. While existing tools such as bedtools can
 extract DNA sequence from gneomic coordinates, some MEME tools require fasta
 headers to be specifically formatted. As a result, users must write custom code
-to extracd DNA sequence for their genomic ranges of interest. 
+to extract the DNA sequence for their genomic ranges of interest. 
 
 The `memes` function `get_sequence` automates extraction of
 DNA sequence from genomic coordinates while simultaneously producing MEME Suite
@@ -237,20 +263,22 @@ representation in R \cite{genomicranges}. Other common genomic coordinate
 representations, such as bed format, are easily imported as `GenomicRanges`
 objects into R using preexisting import functions, meaning `memes` users do not
 have to write any custom import functions to work with range-based data using
-`memes`.  Sequences are returned in `Biostrings` format and can therefore be
+`memes`. Sequences are returned in `Biostrings` format and can therefore be
 used as inputs to all `memes` commands or as inputs to other R/Bioconductor
 functions for sequence analysis. 
 
-During analysis of multiomic data, users can identify different functional
-categories of genomic regions through integration with orthogonal datasets. **TODO
-For example, .** 
+### Data-aware motif analysis
 
-In these instances, motif analysis acts as a powerful tool to
-examine whether differences in motif content is associated with membership of
-distinct categories. In some cases, performing differential motif analysis
-(using one category as the "test" set and another as the "control") can uncover
-biologically relevant motifs which are enriched in one category relative to
-another. Although the MEME Suite allows differential enrichment testing, it does
+Discriminative (or "differential") motif analysis, in which motifs are discovered in one set of
+sequences relative to another set, can uncover biologically relevant motifs
+associated with membership to distinct categories. For example, during analysis
+of multiomic data, users can identify different functional categories of genomic
+regions through integration with orthogonal datasets (e.g.  categorizing
+transcription factor binding sites by the presence or absence of another
+factor). In these instances, motif analysis acts as a powerful tool to examine whether
+differences in motif content is associated with membership of distinct
+categories (e.g. motifs enriched at sites where both factors are bound vs singly
+bound). Although the MEME Suite allows differential enrichment testing, it does
 not inherently provide a mechanism for analyzing groups of sequences in
 parallel, or performing motif analysis with any understanding of data
 categories. The `memes` framework enables "data-aware" motif analysis workflows
@@ -276,11 +304,12 @@ The TomTom tool allows users to compare unknown motifs to a set of known motifs
 to identify the best match. Visual inspection of motif comparison data is a key
 step in assessing the quality and accuracy of a match. The `view_tomtom_hits`
 function allows users to compare query motifs with the list of potential matches
-as assigned by TomTom. The `force_best_match` function allows users to
-reassign the TomTom best match to a lower-ranked (but still statistically
-significant) match in order to highlight motifs with greater biological
-relevance (e.g. to skip over a transcription factor that is not expressed in the
-experimental sample, or when two motifs are matched equally well).
+as assigned by TomTom, similar to the commandline behavior. The
+`force_best_match` function allows users to reassign the TomTom best match
+to a lower-ranked (but still statistically significant) match in order to
+highlight motifs with greater biological relevance (e.g. to skip over a
+transcription factor that is not expressed in the experimental sample, or when
+two motifs are matched equally well).
 
 The AME tool searches for enrichment of motifs within a set of experimental
 sequences relative to a control set. The meaningful result from this tool is the
