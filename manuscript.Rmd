@@ -59,7 +59,7 @@ interoperability between MEME Suite tools and the broader R landscape.
 
 Biopolymers, such as DNA and protein, perform varying functions based on their
 primary sequence. Short, repeated sequences, or "motifs" represent functional
-units within biopolymers which can act as interaction surfaces, create
+units within biopolymers that can act as interaction surfaces, create
 structure, or have enzymatic activity. Identification of shared motifs across
 multiple sequences can provide evidence for shared function, for example,
 identification of kinase substrates based on similarities in phosphorylation
@@ -73,7 +73,7 @@ proprietary data types or have poor interoperability with other tools, creating
 barriers to comprehensive motif analysis within R. The recent addition of
 `universalmotif` to the Bioconductor landscape partially addresss these issues
 by standardizing motif formats and providing a powerful set of tools for
-examining the properties of motifs, however the Bioconductor motif analysis
+examining the properties of motifs. However the Bioconductor motif analysis
 landscape remains incomplete \cite{universalmotif}.
 
 The MEME Suite is a series of commandline and web-based tools that provide a variety
@@ -93,8 +93,8 @@ MEME Suite tool often have complex structures that must be parsed to extract the
 full suite of information, again requiring users to write custom code for this
 task. Finally, although the data-generation capabilities of the MEME Suite are
 excellent, the tools lack powerful ways to visualize the results. Collectively,
-these factors act as barriers to adoption and preclude deep analysis of the
-data, as well as communication of results to the scientific community. 
+these factors act as barriers to adoption, preclude deeper analysis of the
+data, and limit communication of results to the scientific community. 
 
 Here we present `memes`, a motif analysis package that provides a seamless
 interface to MEME Suite tools within R. `memes` uses base R and Bioconductor
@@ -119,7 +119,7 @@ framework.
 
 `memes` also provides simple utilities for data visualization where appropriate.
 Providing R representations of MEME Suite data objects enables generation of
-novel data visualizations using the well established tools available in the R
+novel data visualizations using the well-established tools available in the R
 landscape. Therefore, `memes` empowers users to deeply analyze and visualize
 motif analysis data.
 
@@ -153,7 +153,7 @@ feature-complete interface to the supported MEME Suite tools.
 ### Output Data Structures
 
 MEME tools return HTML reports for each tool that display data in a
-user-friendly way, however, these files are not ideal for downstream processing.
+user-friendly way; however, these files are not ideal for downstream processing.
 Depending on the tool, data are also returned in tab-separated, or XML format,
 which are more amenable to computational processing. However, in the case that
 tab-separated data are returned, results are often incomplete. For example, the
@@ -162,7 +162,7 @@ tab-separated results that do not contain the frequency matrix representations
 of the matched motifs. Instead, users must write custom code to parse these
 matrices back out from the input databases, creating additional barriers to
 analysis. In the case that data are returned in XML format, these files contain
-all relevant data, however are difficult to parse, again requiring users to
+all relevant data; however, XML files are difficult to parse, again requiring users to
 write custom code to extract the necessary data. Finally, the data types
 contained in MEME Suite outputs are complex and multidimensional, and thus
 require special data structures to properly organize the data in memory.
@@ -189,7 +189,7 @@ compares one motif to a series of several motifs to identify possible matches,
 produce an additional layer of complexity such that input matrices (which
 contain metadata as previously described) can have a one-to-many relationship
 with other motif matrices (again with their own metadata). Thus an ideal
-representation for these data is one which can hold an unlimited number of motif
+representation for these data is one that can hold an unlimited number of motif
 matrices and their metadata, contain complex hierarchies, and be easily
 manipulated using standard analysis tools. 
 
@@ -211,18 +211,18 @@ within eachother. These universalmotif data.frames form the basis for a majority
 of `memes` data outputs. These structures are also valid input types to `memes`
 functions, and when used as such, output data are appended as new columns to the
 input data, ensuring data provenance. Finally, because the universalmotif
-data.frame is just a data.frame, it can be manipulated using base R or
-`tidyverse` functions, just like regular R data.frames, lowering the cognitive
-overhead to interfacing with these structures.
+data.frame is a standard R data.frame, it can be manipulated using base R or
+`tidyverse` functions, lowering the cognitive overhead to interfacing with these
+structures.
 
 **Figure?: showing how the data.frame connects to universalmotif**
 
 universalmotif data.frames are not limited to storing motifs from MEME Suite
 data, and can additionally be used to examine or manipulate the properties of
-any motif list. Using `universalmotif` functions to import motif data,
-the `memes` function `as_universalmotif_dataframe()` converts any `universalmotif` object
-into a `universalmotif` data.frame.  Manipulation of linked metadata columns
-will result in updating the linked `universalmotif` object when calling
+any motif list. Using `universalmotif` functions to import motif data, the
+`memes` function `as_universalmotif_dataframe()` converts any `universalmotif`
+object into a `universalmotif` data.frame.  Manipulation of linked metadata
+columns will result in updating the linked `universalmotif` object when calling
 `update_motifs()` to retain the data.frame structure, or when calling
 `as_universalmotif()` to convert the data.frame back into `universalmotif`
 format. In this way, `memes` enables large-scale motif database manipulation &
@@ -290,7 +290,7 @@ data categories from the split column. When a list is used as input to a `memes`
 function, it runs the corresponding MEME Suite tool for each object in the list.
 Users can also pass the name(s) of a category to the `control` argument to
 enable differential analysis of the remaining list members against the
-control category sequences. Therefore, `memes` enables complex data-aware
+control category sequences. In this manner, `memes` enables complex data-aware
 differential motif analysis workflows using simple syntax to extend the
 capabilities of the MEME Suite.
 
