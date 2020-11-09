@@ -233,9 +233,9 @@ Discriminative (or "differential") motif analysis, in which motifs are discovere
 sequences relative to another set, can uncover biologically relevant motifs
 associated with membership to distinct categories. For example, during analysis
 of multiomic data, users can identify different functional categories of genomic
-regions through integration with orthogonal datasets (e.g. categorizing
+regions through integration with orthogonal datasets, such as categorizing
 transcription factor binding sites by the presence or absence of another
-factor). Although the MEME Suite allows differential enrichment testing, it does
+factor. Although the MEME Suite allows differential enrichment testing, it does
 not inherently provide a mechanism for analyzing groups of sequences in
 parallel, or for performing motif analysis with any understanding of data
 categories. The `memes` framework enables "data-aware" motif analysis workflows
@@ -771,7 +771,7 @@ In the future we hope to add additional data visualizations for examining motif
 positioning within features. We will continue to add support for additional MEME Suite
 tools in future versions of the package. Finally, we hope to improve the `memes`
 tooling for analyzing amino-acid motifs, which although fully supported by our
-current framework, may require extra tools which we have not considered.
+current framework, may require extra tools that we have not considered.
 
 # Acknowledgements
 We would like to acknowledge Megan Justice, and members of the McKay lab for
