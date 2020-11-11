@@ -20,7 +20,7 @@ my_plan <- drake_plan(
     dplyr::select(symbol) %>% 
     unique(),
   
-  write_parsed_rna = readr::write_csv(filtered_rnaseq, path = file_out("data/wing_expressed_genes.csv")),
+  write_parsed_rna = readr::write_csv(filtered_rnaseq, file = file_out("data/wing_expressed_genes.csv")),
   
   max_expression_rnaseq = full_rnaseq %>% 
     dplyr::group_by(symbol) %>% 
