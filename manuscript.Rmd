@@ -216,7 +216,7 @@ extract DNA sequence from gneomic coordinates, some MEME tools require fasta
 headers to be specifically formatted. As a result, users must write custom code
 to extract the DNA sequence for their genomic ranges of interest. 
 
-The `memes` function `get_sequence` automates extraction of
+The `memes` function `get_sequence()` automates extraction of
 DNA sequence from genomic coordinates while simultaneously producing MEME Suite
 formatted fasta headers. `get_sequence` accepts genomic-range based inputs in
 `GenomicRanges` format, the *de-facto* standard for genomic coordinate
@@ -275,9 +275,9 @@ statistical parameter (for example, a p-value) associated with the significance
 of motif enrichment. However, AME does not provide a mechanism for visualizing
 these results. 
 
-The `ame_plot_heatmap` function in `memes` returns a `ggplot2` formatted heatmap of
+The `ame_plot_heatmap()` function in `memes` returns a `ggplot2` formatted heatmap of
 statistical significance of motif enrichment. If AME is used to examine motif
-content of multiple groups of sequences, the `ame_plot_heatmap` function can also
+content of multiple groups of sequences, the `ame_plot_heatmap()` function can also
 return a plot comparing motif significance within multiple groups. Several
 options exist to customize the heatmap values in order to capture different aspects
 of the output data. The `ame_compare_heatmap_methods()` function enables users
@@ -317,8 +317,8 @@ in the `memes` vignettes and the package website
 example, we reanalyze recent work examining the causal relationship between the
 binding of the transcription factor E93 to changes in chromatin accessibility
 during *Drosophila* wing development \cite{Nystrom, Niederhuber 2020}. Here, we
-utilize ChIP-seq peak calls for E93 which have been annotated according to the
-change in chromatin accessibility observed before & after E93 binding. These
+utilize ChIP-seq peak calls for E93 that have been annotated according to the
+change in chromatin accessibility observed before and after E93 binding. These
 data are an emblematic example of range-based genomic data (E93 ChIP peaks)
 containing additional groupings (the chromatin accessibility response following
 DNA binding) whose membership may be influenced by differential motif content.
@@ -340,7 +340,7 @@ tends to increase ("Increasing"), decrease ("Decreasing"), or remain unchanged
 head(chip_results, 3)
 ```
 
-Using the `get_sequence` function, GRanges objects are converted into
+Using the `get_sequence()` function, GRanges objects are converted into
 DNAStringSet outputs.
 ```{r}
 dm.genome <- BSgenome.Dmelanogaster.UCSC.dm3::BSgenome.Dmelanogaster.UCSC.dm3
@@ -352,7 +352,7 @@ all_sequences <- chip_results %>%
 ```{r}
 head(all_sequences)
 ```
-In order to perform analysis within different groups of peaks, the GRanges object can be `split` on a metadata column before input to `get_sequence`.
+In order to perform analysis within different groups of peaks, the GRanges object can be `split()` on a metadata column before input to `get_sequence()`.
 ```{r}
 sequences_by_response <- chip_results %>% 
   split(mcols(.)$e93_chromatin_response) %>% 
@@ -367,8 +367,8 @@ head(sequences_by_response)
 
 ## Denovo motif analysis
 The DREME tool can be used to discover short, novel motifs present in a set of
-input sequences relative to a control set. The `runDreme` command is the `memes`
-interface to the DREME tool. `runDreme` syntax enables users to produce complex
+input sequences relative to a control set. The `runDreme()` command is the `memes`
+interface to the DREME tool. `runDreme()` syntax enables users to produce complex
 discriminative analysis designs using intuitive syntax. Examples of possible
 designs and their syntax are compared below.
 
@@ -464,13 +464,13 @@ dreme_fig_bottom <- dreme_vs_static %>%
   patchwork::wrap_plots(nrow = 1) 
 ```
 
-These data are readily visualized using the `universalmotif::view_motifs`
+These data are readily visualized using the `universalmotif::view_motifs()`
 function. Visualization of the results reveals two distinct motifs associated
 with decreasing and increasing sites (**Figure \@ref(fig:dec-v-inc-dreme)**). In this
 analysis, the *de-novo* discovered motifs within each category appear visually
 similar to each other, however, the MEME Suite does not provide a mechanism to
 compare groups of motifs based on all pairwise similarity metrics. We utilized
-the `universalmotif::compare_motifs` function to compute Pearson correlation
+the `universalmotif::compare_motifs()` function to compute Pearson correlation
 coefficients for each set of motifs to quantitatively assess motif similarity
 (**Figure \@ref(fig:dec-v-inc-dreme)**). 
 
@@ -485,8 +485,8 @@ of nearby genes. Therefore, comparison of *de-novo* motifs with known DNA
 binding motifs for transcription factors can be a key step in identifying
 transcriptional regulators. The TomTom tool is used to compare unknown motifs
 against a list of known motifs to identify matches, `memes` provides the
-`runTomTom` function as an interface to this tool. By passing the results from
-`runDreme` into `runTomTom` and searching within a database of *Drosophila*
+`runTomTom()` function as an interface to this tool. By passing the results from
+`runDreme()` into `runTomTom()` and searching within a database of *Drosophila*
 transcription factor motifs, we can identify candidate transcription factors
 that may bind the motifs associated with increasing and decreasing chromatin
 accessibility.
@@ -629,7 +629,7 @@ fly_factor_expressed <- fly_factor %>%
   as_universalmotif()
 ```
 
-`runAme` syntax is identical to `runDreme` in that discriminative designs can be
+`runAme()` syntax is identical to `runDreme()` in that discriminative designs can be
 constructed by calling list entries by name. Data can be visualized using
 `ame_plot_heatmap()`, revealing that the E93 motif is strongly enriched at
 Decreasing sites, while l(3)neo38, lola, and br are enriched in Increasing
@@ -666,7 +666,7 @@ about the quality of each match in the form of a quantitative score \cite{fimo}.
 
 In order to examine the properties of the E93 motif between different ChIP
 peaks, we scan all E93 ChIP peaks for matches to the Fly Factor Survey E93 motif
-using `runFimo`. Results are returned as a GRanges object containing the
+using `runFimo()`. Results are returned as a GRanges object containing the
 positions of each motif. Setting `skip_matched_sequence` to `FALSE` adds the
 sequence of the detected motif to the output.
 
