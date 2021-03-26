@@ -636,7 +636,7 @@ Decreasing sites, while l(3)neo38, lola, and br are enriched in Increasing
 sites, supporting the *de-novo* discovery results (**Figure \@ref(fig:ame-heatmap)**).
 Additionally, AME detects several other transcription factor motifs that
 distinguish decreasing and increasing sites, providing additional clues to
-potential factors that also bind with E93 affect chromatin accessibility.
+potential factors that also bind with E93 to affect chromatin accessibility.
 
 ```{r}
 ame_vs_static <- runAme(sequences_by_response, control = "Static", database = fly_factor_expressed)
@@ -739,7 +739,7 @@ position 12 (**Figure \@ref(fig:fimo)B**). Examination of bulk FIMO scores (wher
 scores represent motifs more similar to the reference) also reveals differences
 in E93 motif quality between groups, in particular, E93 motifs from Decreasing
 sites have higher scores (**Figure \@ref(fig:fimo)C**). Together, these data demonstrate that
-a key distinguishing factor between whether a sites will decrease or increase in
+a key distinguishing factor between whether a site will decrease or increase in
 chromatin accessibility following E93 binding is the number and quality of E93
 motifs at that site. 
 
@@ -756,7 +756,7 @@ patchwork::wrap_plots(n_motifs, patchwork::guide_area(),
     patchwork::plot_annotation(tag_levels = "A")
 ```
 
-# Availability and Future developments:
+# Availability and Future Developments:
 
 The `memes` package source code and installation instructions are available on
 github: [github.com/snystrom/memes](github.com/snystrom/memes). Documentation is
@@ -780,4 +780,4 @@ current framework, may require extra tools that we have not considered.
 
 # Acknowledgements
 We would like to acknowledge Megan Justice, and members of the McKay lab for
-helpful comments and feedback.
+helpful comments and feedback. 
