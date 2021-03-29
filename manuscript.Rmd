@@ -17,6 +17,9 @@ suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(GenomicRanges))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ComplexHeatmap))
+# TODO:
+# use Rstudio pkg repo?
+# Need to install: ComplexHeatmap, drake, readxl, gt, bookdown
 drake::r_make()
 ```
 
@@ -60,7 +63,7 @@ Suite tools require carefully formatted inputs to achieve full functionality,
 yet few tools exist to simplify the process of data formatting, requiring
 instead that users write custom code to prepare their data, or prepare the
 inputs by hand, both of which have the potential to be error prone without
-rigorous testing.  Furthermore, the output data from each MEME Suite tool often
+rigorous testing. Furthermore, the output data from each MEME Suite tool often
 have complex structures that must be parsed to extract the full suite of
 information, again requiring users to write custom code for this task. Finally,
 although the data-generation capabilities of the MEME Suite are excellent, the
@@ -135,7 +138,7 @@ functions.
 Data returned from MEME Suite tools are complex and multidimensional, making
 them difficult to represent in a simple data structure. For example, MEME and
 DREME return de-novo discovered motifs from query sequences along with
-statistical information about their enrichment. In this instance, a position
+statistical information about their enrichment \cite{meme, dreme}. In this instance, a position
 frequency matrix (PFM) of the discovered motif can be represented as a matrix,
 while the properties of that matrix (e.g. the name of the motif, the E-value
 from the enrichment test, background nucleotide frequency, etc.) must be encoded
@@ -144,7 +147,7 @@ corresponding PFM. However, other MEME Suite tools, such as TOMTOM, which
 compares one motif to a series of several motifs to identify possible matches,
 produce an additional layer of complexity such that input matrices (which
 contain metadata as previously described) can have a one-to-many relationship
-with other motif matrices (again with their own metadata). Thus an ideal
+with other motif matrices (again with their own metadata) \cite{tomtom}. Thus an ideal
 representation for these data is one that can hold an unlimited number of motif
 matrices and their metadata, contain complex hierarchies, and be easily
 manipulated using standard analysis tools. 
@@ -160,15 +163,15 @@ form the basis for a majority of `memes` data outputs. These structures are also
 valid input types to `memes` functions, and when used as such, output data are
 appended as new columns to the input data, ensuring data provenance. Finally,
 because `universalmotif_df`s are extensions of base R data.frames, they can be
-manipulated using base R and `tidyverse` workflows.  Therefore, `memes` data
+manipulated using base R and `tidyverse` workflows. Therefore, `memes` data
 integrate seamlessly with common R workflows.
 
 ### Support for genomic range-based data
 
-Motif analysis is often employed in ChIP-seq analysis, in which data is stored
+Motif analysis is often employed in ChIP-seq analysis, in which data are stored
 as genomic coordinates rather than sequence. However, MEME Suite tools are
 designed to work with sequences. While existing tools such as bedtools can
-extract DNA sequence from gneomic coordinates, some MEME tools require fasta
+extract DNA sequence from genomic coordinates, some MEME tools require fasta
 headers to be specifically formatted. As a result, users must write custom code
 to extract the DNA sequence for their genomic ranges of interest. 
 
@@ -186,27 +189,27 @@ functions for sequence analysis.
 
 ### Data-aware motif analysis
 
-Discriminative (or "differential") motif analysis, in which motifs are discovered in one set of
-sequences relative to another set, can uncover biologically relevant motifs
-associated with membership to distinct categories. For example, during analysis
-of multiomic data, users can identify different functional categories of genomic
-regions through integration with orthogonal datasets, such as categorizing
-transcription factor binding sites by the presence or absence of another
-factor. Although the MEME Suite allows differential enrichment testing, it does
-not inherently provide a mechanism for analyzing groups of sequences in
-parallel, or for performing motif analysis with any understanding of data
-categories. The `memes` framework enables "data-aware" motif analysis workflows
-by allowing named lists of `Biostrings` objects as input to each function. If
-using `GenomicRanges`, users can split peak data on a metadata column using the
-base R `split()` function, and then use this result as input to `get_sequence()`, which
-will produce a list of `BioStrings` objects where each entry is named after the
-data categories from the split column. When a list is used as input to a `memes`
-function, it runs the corresponding MEME Suite tool for each object in the list.
-Users can also pass the name(s) of a category to the `control` argument to
-enable differential analysis of the remaining list members against the
-control category sequences. In this manner, `memes` enables complex data-aware
-differential motif analysis workflows using simple syntax to extend the
-capabilities of the MEME Suite.
+Discriminative (or "differential") motif analysis, in which motifs are
+discovered in one set of sequences relative to another set, can uncover
+biologically relevant motifs associated with membership to distinct categories.
+For example, during analysis of multiomic data, users can identify different
+functional categories of genomic regions through integration with orthogonal
+datasets, such as categorizing transcription factor binding sites by the
+presence or absence of another factor \cite{???}. Although the MEME Suite allows
+differential enrichment testing, it does not inherently provide a mechanism for
+analyzing groups of sequences in parallel, or for performing motif analysis with
+an understanding of data categories. The `memes` framework enables "data-aware"
+motif analysis workflows by allowing named lists of `Biostrings` objects as
+input to each function. If using `GenomicRanges`, users can split peak data on a
+metadata column using the base R `split()` function, and then use this result as
+input to `get_sequence()`, which will produce a list of `BioStrings` objects
+where each entry is named after the data categories from the split column. When
+a list is used as input to a `memes` function, it runs the corresponding MEME
+Suite tool for each object in the list. Users can also pass the name(s) of a
+category to the `control` argument to enable differential analysis of the
+remaining list members against the control category sequences. In this manner,
+`memes` enables complex data-aware differential motif analysis workflows using
+simple syntax to extend the capabilities of the MEME Suite.
 
 ## Data visualization
 The MEME Suite provides a small set of data visualizations that have limited
@@ -259,7 +262,7 @@ using `memes`, we have also developed docker and singularity (**TODO: NOTE:**
 singularity is broken for `rocker/rstudio`, so maybe omit this until fixed)
 containers containing a preinstalled version of the MEME Suite along with an
 R/Bioconductor analysis environment including the most recent version of `memes`
-and its dependencies.  As new container versions are released, they are
+and its dependencies. As new container versions are released, they are
 version-tagged and stored to ensure reproducibility while allowing updates to
 the container.
 
@@ -329,10 +332,12 @@ discriminative analysis designs using intuitive syntax. Examples of possible
 designs and their syntax are compared below.
 
 ```{r, eval=F}
-# use all sequences vs shuffled background
+# Use all sequences vs shuffled background
+# Produces:
+#  - All Sequences vs Shuffled All Sequences
 runDreme(all_sequences, control = "shuffle")
 
-# for each response category, discover motifs against a shuffled background set
+# For each response category, discover motifs against a shuffled background set
 # Produces:
 #  - Increasing vs Shuffled Increasing
 #  - Decreasing vs Shuffled Decreasing
@@ -345,14 +350,14 @@ runDreme(sequences_by_response, control = "shuffle")
 runDreme(sequences_by_response$Increasing, control = sequences_by_response$Decreasing)
 
 # Use the "Static" response category as the control set to discover motifs 
-# enriched in each remaining category relative to static sites,
+# enriched in each remaining category relative to static sites
 # Produces:
 #  - Increasing vs Static
 #  - Decreasing vs Static
 runDreme(sequences_by_response, control = "Static")
 
 # Combine the "Static" and "Increasing" sequences and use as a background set to
-# discover motifs enriched in the remaining categories relative
+# discover motifs enriched in the remaining categories 
 # Produces:
 #  - Decreasing vs Static+Increasing
 runDreme(sequences_by_response, control = c("Static", "Increasing"))
@@ -519,7 +524,7 @@ dreme_vs_static_tomtom %>%
 Discovery and matching of *de-novo* motifs is only one way to find candidate
 transcription factors within target sites. Indeed, in many instances, requiring
 that a motif is recovered *de-novo* is not ideal, as these approaches are
-"discovery based". Another approach, implemented
+less sensitive than targeted searches. Another approach, implemented
 by the AME tool, is to search for known motif instances in target sequences and
 test for their overrepresentation relative to a background set of sequences
 \cite{ame}. The `runAme()` function is the `memes` interface to the AME tool. It
@@ -548,7 +553,14 @@ the `altname` column stores the gene symbol.
 
 ```{r}
 fly_factor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
-  as_universalmotif_dataframe()
+  {
+    # TODO: why aren't names added by default on import anymore?
+    names(.) <- purrr::map_chr(., ~{.x['name']})
+    .
+  } %>% 
+  to_df() %>% 
+  # TODO: print method doesn't play nice w/ Rmd
+  data.frame
 ```
 
 ```{r, echo = FALSE}
@@ -574,15 +586,15 @@ n_fly_factor_unexpressed <- fly_factor %>%
 Finally, we subset the motif database to only expressed genes using `dplyr`
 data.frame subsetting syntax (note that base R subsetting functions operate
 equally well on these data structures), then convert the data.frame back into
-`universalmotif` format using `as_universalmotif`. This filtering step removes
+`universalmotif` format using `to_list()`. This filtering step removes
 `r (n_fly_factor_unexpressed / nrow(fly_factor)) %>% {. * 100} %>% round()`% of
 entries from the original database, greatly reducing the multiple-testing
 correction.
 
 ```{r}
 fly_factor_expressed <- fly_factor %>% 
-  dplyr::filter(altname %in% wing_expressed_genes$symbol) %>% 
-  as_universalmotif()
+  dplyr::filter(altname %in% wing_expressed_genes$symbol) %>%
+  to_list()
 ```
 
 `runAme()` syntax is identical to `runDreme()` in that discriminative designs can be
@@ -651,7 +663,7 @@ e93_stack <- e93_fimo %>%
     e93_flyfactor@name <- "E93 FlyFactorSurvey"
     
     m$e93 <- e93_flyfactor
-    return(m)
+    m
   } %>% 
   rev %>% 
   universalmotif::view_motifs()
@@ -718,7 +730,7 @@ The `memes` package source code and installation instructions are available on
 github: [github.com/snystrom/memes](github.com/snystrom/memes). Documentation is
 stored in the package vignettes, and also available at the package website:
 [snystrom.github.io/memes](snystrom.github.io/memes). The `memes_docker`
-containers are available from DockerHub
+
 [https://hub.docker.com/r/snystrom/memes_docker](https://hub.docker.com/r/snystrom/memes_docker),
 and their source code is hosted at github:
 [https://github.com/snystrom/memes_docker](https://github.com/snystrom/memes_docker).
