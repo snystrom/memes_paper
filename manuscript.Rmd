@@ -8,6 +8,10 @@ author:
 output: 
   bookdown::word_document2:
     fig_caption: yes
+    reference_docx: template.docx
+
+bibliography: references.bib
+csl: vancouver-brackets.csl
 ---
 
 ```{r setup, echo = FALSE, warning=FALSE, message=FALSE, include=FALSE}
@@ -17,13 +21,14 @@ suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(GenomicRanges))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ComplexHeatmap))
-# TODO:
-# use Rstudio pkg repo?
+suppressPackageStartupMessages(library(universalmotif))
+# TODO add auto install chunk:
 # Need to install: ComplexHeatmap, drake, readxl, gt, bookdown
+# version pin these?
 drake::r_make()
 ```
 
-# Abstract
+# Abstract {-}
 
 Identification of biopolymer motifs represents a key step in the analysis of
 biological sequences. The MEME Suite is a widely used toolkit for comprehensive
@@ -39,7 +44,7 @@ Finally, `memes` provides data visualization capabilities to facilitate
 communication of results. `memes` is available at
 [github.com/snystrom/memes](github.com/snystrom/memes).
 
-# Introduction
+# Introduction {-}
 
 Biopolymers, such as DNA and protein, perform varying functions based on their
 primary sequence. Short, repeated sequences, or "motifs" represent functional
@@ -48,16 +53,15 @@ or have enzymatic activity. Identification of shared motifs across multiple
 sequences can provide evidence for shared function, for example, identification
 of kinase substrates based on similarities in phosphorylation site sequence, or
 characterizing DNA elements based on shared transcription factor binding
-sequences (TODO: ref kinase motif:
-https://doi.org/10.1016/0968-0004(90)90073-K). Thus the ability to identify,
+sequences [@Kemp1990]. Thus the ability to identify,
 classify, and compare motifs represents a key step in the analysis of biological
 sequences. 
 
 The MEME Suite is a widely utilized set of tools to interrogate motif content
-across a broad range of biological contexts \cite{meme-suite}. With over 22,000
+across a broad range of biological contexts [@Bailey2009]. With over 22,000
 citations to date, and greater than 30,000 unique users of the webserver
 implementation annually, the MEME Suite has emerged as a standard tool in the
-field \cite{meme-usage-report-page, google-scholar-meme}. However, several
+field [@meme_usage; @meme_citations]. However, several
 factors limit the full potential of these tools for use in data analysis. MEME
 Suite tools require carefully formatted inputs to achieve full functionality,
 yet few tools exist to simplify the process of data formatting, requiring
@@ -87,9 +91,9 @@ iterate rapidly during analysis. Here we present several examples of how `memes`
 allows novel analyses of ChIP-seq and FAIRE-seq data by facilitating seamless
 interoperability between MEME Suite tools and the broader R package landscape.
 
-## Design & Implementation
+## Design & Implementation {-}
 
-### Core Utilities
+### Core Utilities {-}
 
 MEME Suite tools are run on the commandline and use files stored on-disk as
 input while returning a series of output files containing varying data types. 
@@ -99,17 +103,17 @@ supported MEME Suite tool to a `run` function (`runDreme()`,
 internally writes input objects to files on disk, runs the tool, then imports
 the data as R objects. These functions accept sequence and motif inputs as
 required by the tool. Sequence inputs are accepted in `BioStrings` format, an
-R/Bioconductor package for storing biopolymer sequence data \cite{BioStrings}.
+R/Bioconductor package for storing biopolymer sequence data [@Biostrings].
 Motif inputs are passed as `universalmotif` objects, another R/Bioconductor
 package for representing motif matrices and their associated metadata
-\cite{universalmotif}. `memes` `run` functions will also accept paths to files
+[@universalmotif]. `memes` `run` functions will also accept paths to files
 on disk, such as fasta files for sequence inputs, and meme format files for
 motif inputs, reducing the need to read large files into memory. Finally, each
 `run` function contains optional function parameters mirroring the commandline
 arguments provided by each MEME Suite tool. In this way, `memes` provides a
 feature-complete interface to the supported MEME Suite tools.
 
-### Output Data Structures
+### Output Data Structures {-}
 
 MEME tools return HTML reports for each tool that display data in a
 user-friendly way; however, these files are not ideal for downstream processing.
@@ -133,12 +137,12 @@ the commandline or webserver versions of the MEME Suite for use in R. These
 import functions also underlie the import step internal to each of the `run`
 functions.
 
-### structured data.frames hold multidimensional output data
+### structured data.frames hold multidimensional output data {-}
 
 Data returned from MEME Suite tools are complex and multidimensional, making
 them difficult to represent in a simple data structure. For example, MEME and
 DREME return de-novo discovered motifs from query sequences along with
-statistical information about their enrichment \cite{meme, dreme}. In this instance, a position
+statistical information about their enrichment [@Bailey1994; @Bailey2011]. In this instance, a position
 frequency matrix (PFM) of the discovered motif can be represented as a matrix,
 while the properties of that matrix (e.g. the name of the motif, the E-value
 from the enrichment test, background nucleotide frequency, etc.) must be encoded
@@ -147,14 +151,14 @@ corresponding PFM. However, other MEME Suite tools, such as TOMTOM, which
 compares one motif to a series of several motifs to identify possible matches,
 produce an additional layer of complexity such that input matrices (which
 contain metadata as previously described) can have a one-to-many relationship
-with other motif matrices (again with their own metadata) \cite{tomtom}. Thus an ideal
+with other motif matrices (again with their own metadata) [@Gupta2007]. Thus an ideal
 representation for these data is one that can hold an unlimited number of motif
 matrices and their metadata, contain complex hierarchies, and be easily
 manipulated using standard analysis tools. 
 
 The `universalmotif_df` data structure is a powerful R/Bioconductor
 representation for motif matrices and their associated metadata
-\cite{universalmotif}. `universalmotif_df` format is an alternative
+[@universalmotif]. `universalmotif_df` format is an alternative
 representation of `universalmotif` objects where motifs are stored along rows of
 a data.frame, and columns store metadata associated with each motif. Adding
 one-to-many relationships within this structure is trivial, as additional
@@ -166,7 +170,7 @@ because `universalmotif_df`s are extensions of base R data.frames, they can be
 manipulated using base R and `tidyverse` workflows. Therefore, `memes` data
 integrate seamlessly with common R workflows.
 
-### Support for genomic range-based data
+### Support for genomic range-based data {-}
 
 Motif analysis is often employed in ChIP-seq analysis, in which data are stored
 as genomic coordinates rather than sequence. However, MEME Suite tools are
@@ -179,7 +183,7 @@ The `memes` function `get_sequence()` automates extraction of
 DNA sequence from genomic coordinates while simultaneously producing MEME Suite
 formatted fasta headers. `get_sequence()` accepts genomic-range based inputs in
 `GenomicRanges` format, the *de-facto* standard for genomic coordinate
-representation in R \cite{genomicranges}. Other common genomic coordinate
+representation in R [@GRanges]. Other common genomic coordinate
 representations, such as bed format, are easily imported as `GenomicRanges`
 objects into R using preexisting import functions, meaning `memes` users do not
 have to write any custom import functions to work with range-based data using
@@ -187,7 +191,7 @@ have to write any custom import functions to work with range-based data using
 used as inputs to all `memes` commands or as inputs to other R/Bioconductor
 functions for sequence analysis. 
 
-### Data-aware motif analysis
+### Data-aware motif analysis {-}
 
 Discriminative (or "differential") motif analysis, in which motifs are
 discovered in one set of sequences relative to another set, can uncover
@@ -195,7 +199,7 @@ biologically relevant motifs associated with membership to distinct categories.
 For example, during analysis of multiomic data, users can identify different
 functional categories of genomic regions through integration with orthogonal
 datasets, such as categorizing transcription factor binding sites by the
-presence or absence of another factor \cite{???}. Although the MEME Suite allows
+presence or absence of another factor [@Nystrom2020]. Although the MEME Suite allows
 differential enrichment testing, it does not inherently provide a mechanism for
 analyzing groups of sequences in parallel, or for performing motif analysis with
 an understanding of data categories. The `memes` framework enables "data-aware"
@@ -211,7 +215,7 @@ remaining list members against the control category sequences. In this manner,
 `memes` enables complex data-aware differential motif analysis workflows using
 simple syntax to extend the capabilities of the MEME Suite.
 
-## Data visualization
+## Data visualization {-}
 The MEME Suite provides a small set of data visualizations that have limited
 customizability. `memes` leverages the advantages of the R graphics environment
 to provide a wide range of data visualization options that are highly
@@ -219,7 +223,7 @@ customizable. We describe two scenarios below.
 
 The TomTom tool allows users to compare unknown motifs to a set of known motifs
 to identify the best match. Visual inspection of motif comparison data is a key
-step in assessing the quality and accuracy of a match. The `view_tomtom_hits()`
+step in assessing the quality and accuracy of a match [@Gupta2007]. The `view_tomtom_hits()`
 function allows users to compare query motifs with the list of potential matches
 as assigned by TomTom, similar to the commandline behavior. The
 `force_best_match()` function allows users to reassign the TomTom best match
@@ -229,7 +233,7 @@ transcription factor that is not expressed in the experimental sample, or when
 two motifs are matched equally well).
 
 The AME tool searches for enrichment of motifs within a set of experimental
-sequences relative to a control set. The meaningful result from this tool is the
+sequences relative to a control set [@Buske2010]. The meaningful result from this tool is the
 statistical parameter (for example, a p-value) associated with the significance
 of motif enrichment. However, AME does not provide a mechanism for visualizing
 these results. 
@@ -243,7 +247,7 @@ of the output data. The `ame_compare_heatmap_methods()` function enables users
 to compare the distribution of values between samples in order to select a
 threshold that accurately captures the dynamic range of their results.
 
-## Containerized analysis maximizes availability and facilitates reproducibility
+## Containerized analysis maximizes availability and facilitates reproducibility {-}
 `memes` relies on a locally installed version of the MEME Suite which is
 accessed by the user's R process. Although R is available on Windows, Mac, and
 Linux operating systems, the MEME Suite is incompatible with Windows, limiting
@@ -258,15 +262,13 @@ therefore without careful consideration of this behavior, the same code run on
 two systems may not produce identical results, even if using the same major
 version of the MEME Suite. In order to increase access to the MEME Suite on
 unsupported operating systems, and to facilitate reproducible motif analysis
-using `memes`, we have also developed docker and singularity (**TODO: NOTE:**
-singularity is broken for `rocker/rstudio`, so maybe omit this until fixed)
-containers containing a preinstalled version of the MEME Suite along with an
-R/Bioconductor analysis environment including the most recent version of `memes`
-and its dependencies. As new container versions are released, they are
-version-tagged and stored to ensure reproducibility while allowing updates to
-the container.
+using `memes`, we have also developed a docker container with a
+preinstalled version of the MEME Suite along with an R/Bioconductor analysis
+environment including the most recent version of `memes` and its dependencies.
+As new container versions are released, they are version-tagged and stored to
+ensure reproducibility while allowing updates to the container.
 
-# Results
+# Results {-}
 
 Here we briefly highlight each of `memes` current features for analyzing
 ChIP-seq data. Additional detailed walkthroughs for each supported MEME Suite
@@ -275,7 +277,7 @@ in the `memes` vignettes and the package website
 ([snystrom.github.io/memes](snystrom.github.io/memes)). In the following
 example, we reanalyze recent work examining the causal relationship between the
 binding of the transcription factor E93 to changes in chromatin accessibility
-during *Drosophila* wing development \cite{Nystrom, Niederhuber 2020}. Here, we
+during *Drosophila* wing development [@Nystrom2020]. Here, we
 utilize ChIP-seq peak calls for E93 that have been annotated according to the
 change in chromatin accessibility observed before and after E93 binding. These
 data are an emblematic example of range-based genomic data (E93 ChIP peaks)
@@ -324,7 +326,7 @@ This produces in a BStringSetList where list members contain a DNAStringSet for 
 head(sequences_by_response)
 ```
 
-## Denovo motif analysis
+## Denovo motif analysis {-}
 The DREME tool can be used to discover short, novel motifs present in a set of
 input sequences relative to a control set. The `runDreme()` command is the `memes`
 interface to the DREME tool. `runDreme()` syntax enables users to produce complex
@@ -408,9 +410,9 @@ plot_correlation_heatmap <- function(mat, name){
   rownames(mat) <- NULL
   ComplexHeatmap::Heatmap(mat,
                           col = colors, 
-                          name = "Pearson Correlation", 
+                          name = "Pearson's\nR", 
                           column_names_rot = 45,
-                          column_title = paste(name, "Motif Similarity")
+                          column_title = paste(name, "Motif Similarity"), raster_magick_filter = 
                           )
   
 }
@@ -421,7 +423,9 @@ dreme_fig_bottom <- dreme_vs_static %>%
   purrr::map(get_motif_correlation) %>% 
   purrr::imap(plot_correlation_heatmap) %>% 
   # capture heatmaps as grobs
-  purrr::map(~{grid::grid.grabExpr(draw(.x))}) %>% 
+  # add some right padding
+  # https://jokergoo.github.io/ComplexHeatmap-reference/book/a-list-of-heatmaps.html#manually-increase-space-around-the-plot
+  purrr::map(~{grid::grid.grabExpr(draw(.x, padding = unit(c(0,5,0,10), "mm")))}) %>% 
   patchwork::wrap_plots(nrow = 1) 
 ```
 
@@ -452,7 +456,7 @@ transcription factor motifs, we can identify candidate transcription factors
 that may bind the motifs associated with increasing and decreasing chromatin
 accessibility.
 
-```{r}
+```{r, message = FALSE}
 dreme_vs_static_tomtom <- runTomTom(dreme_vs_static, database = "data/flyFactorSurveyCleaned.meme", dist = "ed")
 ```
 
@@ -480,7 +484,7 @@ top_hit_grid <- function(x, title){
 }
 
 # Plotting every hit:
-# decided to just use a representative sample insted
+# decided to just use a representative sample instead
 #dreme_vs_static_tomtom %>% 
 #  purrr::imap(~{plot_top_hit(.x) %>% top_hit_grid(., .y)}) %>% 
 #  patchwork::wrap_plots(ncol = 1)
@@ -507,9 +511,12 @@ dreme_vs_static_tomtom %>%
   dplyr::select(category, name, best_match_altname) %>% 
   dplyr::rename("Best Match TF" = best_match_altname) %>% 
   gt(rowname_col = "name",
-     groupname_col = "category") %>% 
-  tab_header(title = "Best match results from TomTom")
+     groupname_col = "category")
+  # Caption: Table 1: Summary of all TomTom matches for denovo motifs discovered in E93 responsive ChIP peaks.
+
+  #tab_header(title = "Best match results from TomTom")
      # this feature is in development branch??
+     # remotes::install_github("rstudio/gt", ref="eff3be7384365a44459691e49b9b740420cd0851")
      # search: R markdown gt table reference
      # https://community.rstudio.com/t/how-to-set-a-reference-in-rmarkdown-to-a-gt-table/23781/2
      #lab = "tab:tomtom-table") 
@@ -519,7 +526,7 @@ dreme_vs_static_tomtom %>%
 
 
 
-## Motif enrichment testing using runAme
+## Motif enrichment testing using runAme {-}
 
 Discovery and matching of *de-novo* motifs is only one way to find candidate
 transcription factors within target sites. Indeed, in many instances, requiring
@@ -527,8 +534,8 @@ that a motif is recovered *de-novo* is not ideal, as these approaches are
 less sensitive than targeted searches. Another approach, implemented
 by the AME tool, is to search for known motif instances in target sequences and
 test for their overrepresentation relative to a background set of sequences
-\cite{ame}. The `runAme()` function is the `memes` interface to the AME tool. It
-accepts a set of sequences as input and control sets, and will peform enrichment
+[@Buske2010]. The `runAme()` function is the `memes` interface to the AME tool. It
+accepts a set of sequences as input and control sets, and will perform enrichment
 testing using a provided motif database for occurrances of each provided motif.
 
 A major limitation of this approach is that transcription factors containing
@@ -542,29 +549,26 @@ transcription factor motif database to include only motifs for transcription
 factors expressed in the sample of interest. Accounting for transcription factor
 expression during motif analysis has been demonstrated to increase the
 probability of identifying biologically relevant transcription factor candidates
-\cite{hector franco's STAR paper, others?}.
+[@Nystrom2020; @Malladi2020].
 
-The `memes` universalmotif data.frame structure can be used to integrate
+The `universalmotif_df` structure can be used to integrate
 expression data with a motif database to remove entries for transcription
 factors that are not expressed. To do so, we import a *Drosophila*
 transcription factor motif database generated by the Fly Factor Survey and
-convert to universalmotif data.frame format \cite{fly factor}. In this database,
+convert to `universalmotif_df` format [@Zhu2011]. In this database,
 the `altname` column stores the gene symbol.
 
 ```{r}
 fly_factor <- universalmotif::read_meme("data/flyFactorSurveyCleaned.meme") %>% 
-  {
-    # TODO: why aren't names added by default on import anymore?
-    names(.) <- purrr::map_chr(., ~{.x['name']})
-    .
-  } %>% 
-  to_df() %>% 
-  # TODO: print method doesn't play nice w/ Rmd
-  data.frame
+  # Add motif names to the list entry
+  setNames(., purrr::map_chr(., ~{.x['name']})) %>% 
+  to_df()
 ```
 
 ```{r, echo = FALSE}
-head(fly_factor, 3)
+# Convert to tibble so printing looks better
+# TODO: use pillar to make a custom print for final publication?
+head(tibble::as_tibble(fly_factor) %>% dplyr::select(!tidyselect::contains("motif"), motif), 3)
 ```
 
 Next, we import a pre-filtered list of genes expressed in a timecourse of
@@ -621,7 +625,7 @@ ame_vs_static %>%
          y = "ChIP Peak Type")
 ```
 
-### Motif matching using runFimo
+### Motif matching using runFimo {-}
 
 A striking result from these analyses is that the E93 motif is so strongly
 enriched within E93 ChIP peaks that decrease in accessibility. Significance of
@@ -630,7 +634,7 @@ motif relative to the canonical motif or differences in motif number in one
 group relative to other groups. These questions can be explored directly by
 identifying motif occurrances in target regions and examining their properties.
 FIMO allows users to match motifs in input sequences while returning information
-about the quality of each match in the form of a quantitative score \cite{fimo}. 
+about the quality of each match in the form of a quantitative score [@Grant2011]. 
 
 In order to examine the properties of the E93 motif between different ChIP
 peaks, we scan all E93 ChIP peaks for matches to the Fly Factor Survey E93 motif
@@ -642,7 +646,7 @@ sequence of the detected motif to the output.
 e93_fimo <- runFimo(all_sequences, fly_factor_expressed$Eip93F_SANGER_10, skip_matched_sequence = FALSE, thresh = 1e-3)
 ```
 
-Using `plyranges`, matched motifs can be joined with the metadata of the ChIP peaks with which they intersect.
+Using `plyranges`, matched motifs can be joined with the metadata of the ChIP peaks with which they intersect [@plyranges].
 
 ```{r}
 e93_fimo %<>% 
@@ -724,19 +728,17 @@ patchwork::wrap_plots(n_motifs, patchwork::guide_area(),
     patchwork::plot_annotation(tag_levels = "A")
 ```
 
-# Availability and Future Developments:
+# Availability and Future Developments {-}
 
 The `memes` package source code and installation instructions are available on
 github: [github.com/snystrom/memes](github.com/snystrom/memes). Documentation is
 stored in the package vignettes, and also available at the package website:
-[snystrom.github.io/memes](snystrom.github.io/memes). The `memes_docker`
-
-[https://hub.docker.com/r/snystrom/memes_docker](https://hub.docker.com/r/snystrom/memes_docker),
-and their source code is hosted at github:
+[snystrom.github.io/memes](snystrom.github.io/memes). The `memes_docker` container  is available on dockerhub: [https://hub.docker.com/r/snystrom/memes_docker](https://hub.docker.com/r/snystrom/memes_docker),
+and the container source code is hosted at github:
 [https://github.com/snystrom/memes_docker](https://github.com/snystrom/memes_docker).
 
 This manuscript was automatically generated using Rmarkdown within the
-`memes_docker` container (**TODO: ADD VERSION**). Its source code, raw data, and
+`memes_docker` container. Its source code, raw data, and
 instructions to reproduce all analysis can be found at
 [github.com/snystrom/memes_paper/](github.com/snystrom/memes_paper/).
 
@@ -746,6 +748,12 @@ tools in future versions of the package. Finally, we hope to improve the `memes`
 tooling for analyzing amino-acid motifs, which although fully supported by our
 current framework, may require extra tools that we have not considered.
 
-# Acknowledgements
-We would like to acknowledge Megan Justice, and members of the McKay lab for
-helpful comments and feedback. 
+# Acknowledgements {-}
+We would like to acknowledge Megan Justice, Garrett Graham, and members of the
+McKay lab for helpful comments and feedback. Benjamin Jean-Marie Tremblay added
+additional features to universalmotif which greatly benefitted the development
+of memes.
+
+# References {-}
+
+<div id="refs"></div>
