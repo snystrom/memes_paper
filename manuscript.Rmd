@@ -49,8 +49,8 @@ communication of results. `memes` is available at
 Biopolymers, such as DNA and protein, perform varying functions based on their
 primary sequence. Short, repeated sequences, or "motifs" represent functional
 units within biopolymers that can act as interaction surfaces, create structure,
-or have enzymatic activity. Identification of shared motifs across multiple
-sequences can provide evidence for shared function, for example, identification
+or contribute to enzymatic activity. Identification of similar motifs across multiple
+sequences can provide evidence for shared function, such as identification
 of kinase substrates based on similarities in phosphorylation site sequence, or
 characterizing DNA elements based on shared transcription factor binding
 sequences [@Kemp1990]. Thus the ability to identify,
@@ -88,7 +88,8 @@ syntax.
 
 `memes` is designed for maximum flexibility and ease of use to allow users to
 iterate rapidly during analysis. Here we present several examples of how `memes`
-allows novel analyses of ChIP-seq and FAIRE-seq data by facilitating seamless
+allows novel analyses of transcription factor binding profile (ChIP-seq) and
+open chromatin profile (FAIRE-seq) data by facilitating seamless
 interoperability between MEME Suite tools and the broader R package landscape.
 
 ## Design & Implementation {-}
@@ -238,9 +239,9 @@ statistical parameter (for example, a p-value) associated with the significance
 of motif enrichment. However, AME does not provide a mechanism for visualizing
 these results. 
 
-The `ame_plot_heatmap()` function in `memes` returns a `ggplot2` formatted heatmap of
+The `plot_ame_heatmap()` function in `memes` returns a `ggplot2` formatted heatmap of
 statistical significance of motif enrichment. If AME is used to examine motif
-content of multiple groups of sequences, the `ame_plot_heatmap()` function can also
+content of multiple groups of sequences, the `plot_ame_heatmap()` function can also
 return a plot comparing motif significance within multiple groups. Several
 options exist to customize the heatmap values in order to capture different aspects
 of the output data. The `ame_compare_heatmap_methods()` function enables users
@@ -366,8 +367,9 @@ runDreme(sequences_by_response, control = c("Static", "Increasing"))
 ```
 
 In order to discover motifs associated with dynamic changes to chromatin
-accessibility, we use static sites as the control set to discover motifs
-enriched in both increasing and decreasing sites.
+accessibility, we use open chromatin sites that do not change in accessibility
+(i.e. "static sites") as the control set to discover motifs enriched in either
+increasing or decreasing sites.
 
 ```{r, eval=F}
 dreme_vs_static <- runDreme(sequences_by_response, control = "Static")
@@ -433,7 +435,7 @@ These data are readily visualized using the `universalmotif::view_motifs()`
 function. Visualization of the results reveals two distinct motifs associated
 with decreasing and increasing sites (**Figure \@ref(fig:dec-v-inc-dreme)**). In this
 analysis, the *de-novo* discovered motifs within each category appear visually
-similar to each other, however, the MEME Suite does not provide a mechanism to
+similar to each other; however, the MEME Suite does not provide a mechanism to
 compare groups of motifs based on all pairwise similarity metrics. We utilized
 the `universalmotif::compare_motifs()` function to compute Pearson correlation
 coefficients for each set of motifs to quantitatively assess motif similarity
@@ -467,7 +469,7 @@ representative plot of these data is shown in **Figure \@ref(fig:tomtom-example)
 the full results can be viewed in **Table \@ref(tab:tomtom-table)**. This analysis revealed
 that the motifs associated with decreasing sites are highly similar to the E93
 motif. Conversely, motifs found in increasing sites match the transcription
-factors br, l(3)neo38, gl, and lola (**Table \@ref(tab:tomtom-table)**). These data support
+factors Br, L(3)neo38, Gl, and Lola (**Table \@ref(tab:tomtom-table)**). These data support
 the hypothesis that E93 binding to its motif may play a larger role in chromatin
 closing activity, while binding of the transcription factor br is associated
 with chromatin opening.
@@ -536,7 +538,7 @@ by the AME tool, is to search for known motif instances in target sequences and
 test for their overrepresentation relative to a background set of sequences
 [@Buske2010]. The `runAme()` function is the `memes` interface to the AME tool. It
 accepts a set of sequences as input and control sets, and will perform enrichment
-testing using a provided motif database for occurrances of each provided motif.
+testing using a provided motif database for occurrences of each provided motif.
 
 A major limitation of this approach is that transcription factors containing
 similar families of DNA binding domain often possess highly similar motifs,
@@ -603,8 +605,8 @@ fly_factor_expressed <- fly_factor %>%
 
 `runAme()` syntax is identical to `runDreme()` in that discriminative designs can be
 constructed by calling list entries by name. Data can be visualized using
-`ame_plot_heatmap()`, revealing that the E93 motif is strongly enriched at
-Decreasing sites, while l(3)neo38, lola, and br are enriched in Increasing
+`plot_ame_heatmap()`, revealing that the E93 motif is strongly enriched at
+Decreasing sites, while l(3)neo38, lola, and br motifs are enriched in Increasing
 sites, supporting the *de-novo* discovery results (**Figure \@ref(fig:ame-heatmap)**).
 Additionally, AME detects several other transcription factor motifs that
 distinguish decreasing and increasing sites, providing additional clues to
@@ -620,7 +622,7 @@ ame_vs_static %>%
   dplyr::mutate(category = paste0(category, "\nAccessibility")) %>% 
   dplyr::group_by(category, motif_alt_id) %>% 
   dplyr::filter(adj.pvalue == min(adj.pvalue)) %>% 
-  ame_plot_heatmap(group = category, id = motif_alt_id) +
+  plot_ame_heatmap(group = category, id = motif_alt_id) +
     labs(x = "Transcription Factor",
          y = "ChIP Peak Type")
 ```
@@ -632,7 +634,7 @@ enriched within E93 ChIP peaks that decrease in accessibility. Significance of
 motif enrichment can be driven by several factors, such as quality of the query
 motif relative to the canonical motif or differences in motif number in one
 group relative to other groups. These questions can be explored directly by
-identifying motif occurrances in target regions and examining their properties.
+identifying motif occurrences in target regions and examining their properties.
 FIMO allows users to match motifs in input sequences while returning information
 about the quality of each match in the form of a quantitative score [@Grant2011]. 
 
