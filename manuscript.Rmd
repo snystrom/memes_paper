@@ -16,15 +16,25 @@ csl: vancouver-brackets.csl
 
 ```{r setup, echo = FALSE, warning=FALSE, message=FALSE, include=FALSE}
 # Figure caption: https://stackoverflow.com/questions/31926623/figures-captions-and-labels-in-knitr
+
+# Install pkgs not preinstalled in container
+need_install <- c("ComplexHeatmap", "drake", "readxl", "gt", "bookdown") 
+
+lapply(need_install, function(x){
+  if (!require(x, character.only = TRUE)) {
+    BiocManager::install(x, dependencies = TRUE)
+  }
+})
+
+# Load pkgs
 suppressPackageStartupMessages(library(memes))
 suppressPackageStartupMessages(library(magrittr))
 suppressPackageStartupMessages(library(GenomicRanges))
 suppressPackageStartupMessages(library(ggplot2))
 suppressPackageStartupMessages(library(ComplexHeatmap))
 suppressPackageStartupMessages(library(universalmotif))
-# TODO add auto install chunk:
-# Need to install: ComplexHeatmap, drake, readxl, gt, bookdown
-# version pin these?
+
+
 drake::r_make()
 ```
 
@@ -641,11 +651,10 @@ about the quality of each match in the form of a quantitative score [@Grant2011]
 In order to examine the properties of the E93 motif between different ChIP
 peaks, we scan all E93 ChIP peaks for matches to the Fly Factor Survey E93 motif
 using `runFimo()`. Results are returned as a GRanges object containing the
-positions of each motif. Setting `skip_matched_sequence` to `FALSE` adds the
-sequence of the detected motif to the output.
+positions of each motif. 
 
 ```{r}
-e93_fimo <- runFimo(all_sequences, fly_factor_expressed$Eip93F_SANGER_10, skip_matched_sequence = FALSE, thresh = 1e-3)
+e93_fimo <- runFimo(all_sequences, fly_factor_expressed$Eip93F_SANGER_10, thresh = 1e-3)
 ```
 
 Using `plyranges`, matched motifs can be joined with the metadata of the ChIP peaks with which they intersect [@plyranges].
@@ -742,7 +751,7 @@ and the container source code is hosted at github:
 This manuscript was automatically generated using Rmarkdown within the
 `memes_docker` container. Its source code, raw data, and
 instructions to reproduce all analysis can be found at
-[github.com/snystrom/memes_paper/](github.com/snystrom/memes_paper/).
+[github.com/snystrom/memes_paper/](github.com/snystrom/memes_paper/). Data used in this manuscript were from: [GSE141738](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141738).
 
 In the future we hope to add additional data visualizations for examining motif
 positioning within features. We will continue to add support for additional MEME Suite
