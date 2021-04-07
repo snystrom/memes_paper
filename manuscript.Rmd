@@ -751,7 +751,9 @@ and the container source code is hosted at github:
 This manuscript was automatically generated using Rmarkdown within the
 `memes_docker` container. Its source code, raw data, and
 instructions to reproduce all analysis can be found at
-[github.com/snystrom/memes_paper/](github.com/snystrom/memes_paper/). Data used in this manuscript were from: [GSE141738](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141738).
+[github.com/snystrom/memes_paper/](github.com/snystrom/memes_paper/). 
+Data used in this manuscript can be found on GEO at the following accession number:
+[GSE141738](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE141738).
 
 In the future we hope to add additional data visualizations for examining motif
 positioning within features. We will continue to add support for additional MEME Suite
