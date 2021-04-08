@@ -46,12 +46,15 @@ analysis  of biopolymer motifs; however, these tools are poorly integrated
 within popular analysis frameworks like the R/Bioconductor project, creating
 barriers to their use. Here we present `memes`, an R package which provides a
 seamless R interface to the MEME Suite. `memes` provides a novel "data aware"
-interface to these tools, enabling rapid and complex discriminative motif analysis workflows.
-In addition to interfacing with popular MEME Suite tools, `memes` leverages
-existing R/Bioconductor data structures to store the complex, multidimensional
-data returned by MEME Suite tools for rapid data access and manipulation.
-Finally, `memes` provides data visualization capabilities to facilitate
-communication of results. `memes` is available at
+interface to these tools, enabling rapid and complex discriminative motif
+analysis workflows.  In addition to interfacing with popular MEME Suite tools,
+`memes` leverages existing R/Bioconductor data structures to store the complex,
+multidimensional data returned by MEME Suite tools for rapid data access and
+manipulation.  Finally, `memes` provides data visualization capabilities to
+facilitate communication of results. `memes` is available as a Bioconductor
+package at
+[https://bioconductor.org/packages/memes](https://bioconductor.org/packages/memes),
+and the source code can be found at
 [github.com/snystrom/memes](github.com/snystrom/memes).
 
 # Introduction {-}
@@ -68,7 +71,7 @@ classify, and compare motifs represents a key step in the analysis of biological
 sequences. 
 
 The MEME Suite is a widely utilized set of tools to interrogate motif content
-across a broad range of biological contexts [@Bailey2009]. With over 22,000
+across a broad range of biological contexts [@Bailey2009]. With over 25,000
 citations to date, and greater than 30,000 unique users of the webserver
 implementation annually, the MEME Suite has emerged as a standard tool in the
 field [@meme_usage; @meme_citations]. However, several
@@ -741,10 +744,14 @@ patchwork::wrap_plots(n_motifs, patchwork::guide_area(),
 
 # Availability and Future Developments {-}
 
-The `memes` package source code and installation instructions are available on
-github: [github.com/snystrom/memes](github.com/snystrom/memes). Documentation is
-stored in the package vignettes, and also available at the package website:
-[snystrom.github.io/memes](snystrom.github.io/memes). The `memes_docker` container  is available on dockerhub: [https://hub.docker.com/r/snystrom/memes_docker](https://hub.docker.com/r/snystrom/memes_docker),
+`memes` is part of Bioconductor. Installation instructions can be found at
+[https://bioconductor.org/packages/memes](https://bioconductor.org/packages/memes).
+The `memes` package source code is available on github:
+[github.com/snystrom/memes](github.com/snystrom/memes). Documentation is stored
+in the package vignettes, and also available at the package website:
+[snystrom.github.io/memes](snystrom.github.io/memes). The `memes_docker`
+container  is available on dockerhub:
+[https://hub.docker.com/r/snystrom/memes_docker](https://hub.docker.com/r/snystrom/memes_docker),
 and the container source code is hosted at github:
 [https://github.com/snystrom/memes_docker](https://github.com/snystrom/memes_docker).
 
