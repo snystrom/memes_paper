@@ -1,5 +1,5 @@
 ---
-title: 'Memes: an R interface to the MEME Suite'
+title: 'Memes: a motif analysis environment in R using tools from the MEME Suite'
 author:
 - ORCID: 0000-0003-1000-1579
   name: Spencer L. Nystrom
@@ -93,7 +93,7 @@ act as barriers to adoption, preclude deeper analysis of the data, and limit
 communication of results to the scientific community. 
 
 Here we present `memes`, a motif analysis package that provides a seamless
-interface to a selection of popular MEME Suite tools within R. Six MEME Suite tools are contained within the `memes` wrapper (Table 1). `memes` uses base R and Bioconductor
+interface to a selection of popular MEME Suite tools within R. Six MEME Suite tools are contained within the `memes` wrapper (**Table 1**). `memes` uses base R and Bioconductor
 data types for data input and output, facilitating better integration with
 common analysis tools like the `tidyverse` and other Bioconductor packages [@rcore; @bioconductor; @tidyverse].
 Unlike the commandline implementation, `memes` outputs also function as inputs
@@ -483,10 +483,10 @@ Using this approach, the results can be visualized using  the
 `view_tomtom_hits()` function to visually inspect the matches assigned by
 TomTom, providing a simple way to assess the quality of the match.  A
 representative plot of these data is shown in **Figure \@ref(fig:tomtom-example)**, while
-the full results can be viewed in **Table 1**. This analysis revealed
+the full results can be viewed in **Table 2**. This analysis revealed
 that the motifs associated with decreasing sites are highly similar to the E93
 motif. Conversely, motifs found in increasing sites match the transcription
-factors Br, L(3)neo38, Gl, and Lola (**Table 1**). These data support
+factors Br, L(3)neo38, Gl, and Lola (**Table 2**). These data support
 the hypothesis that E93 binding to its motif may play a larger role in chromatin
 closing activity, while binding of the transcription factor br is associated
 with chromatin opening.
