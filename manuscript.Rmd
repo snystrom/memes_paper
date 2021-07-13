@@ -9,12 +9,16 @@ output:
   bookdown::word_document2:
     fig_caption: yes
     reference_docx: template.docx
+    keep_tex: true
 
 bibliography: references.bib
 csl: vancouver-brackets.csl
 ---
 
+
 ```{r setup, echo = FALSE, warning=FALSE, message=FALSE, include=FALSE}
+# Don't remove tex intermediate files
+options(tinytex.clean = FALSE)
 # Figure caption: https://stackoverflow.com/questions/31926623/figures-captions-and-labels-in-knitr
 
 # Install pkgs not preinstalled in container
@@ -89,9 +93,9 @@ act as barriers to adoption, preclude deeper analysis of the data, and limit
 communication of results to the scientific community. 
 
 Here we present `memes`, a motif analysis package that provides a seamless
-interface to MEME Suite tools within R. `memes` uses base R and Bioconductor
+interface to a selection of popular MEME Suite tools within R. Six MEME Suite tools are contained within the `memes` wrapper (Table 1). `memes` uses base R and Bioconductor
 data types for data input and output, facilitating better integration with
-common analysis tools like the `tidyverse` and other Bioconductor packages.
+common analysis tools like the `tidyverse` and other Bioconductor packages [@rcore; @bioconductor; @tidyverse].
 Unlike the commandline implementation, `memes` outputs also function as inputs
 to other MEME Suite tools, allowing simple construction of motif analysis
 pipelines without additional data processing steps. Additionally, R/Bioconductor
@@ -141,7 +145,7 @@ matrices back out from the input databases, creating additional barriers to
 analysis. In the case that data are returned in XML format, these files contain
 all relevant data; however, XML files are difficult to parse, again requiring users to
 write custom code to extract the necessary data. Finally, the data types
-contained in MEME Suite outputs are complex and multidimensional, and thus
+contained in MEME Suite outputs are context-specific and multidimensional, and thus
 require special data structures to properly organize the data in memory.
 
 `memes` provides custom-built data import functions for each supported MEME
@@ -153,7 +157,7 @@ each of the `run` functions, ensuring consistent performance.
 
 ### Structured data.frames hold multidimensional output data {-}
 
-Data returned from MEME Suite tools are complex and multidimensional, making
+Data returned from MEME Suite tools are often multidimensional, making
 them difficult to represent in a simple data structure. For example, MEME and
 DREME return de-novo discovered motifs from query sequences along with
 statistical information about their enrichment [@Bailey1994; @Bailey2011]. In this instance, a position
@@ -163,11 +167,11 @@ from the enrichment test, background nucleotide frequency, etc.) must be encoded
 outside of the matrix, while maintaining their relationship to the
 corresponding PFM. However, other MEME Suite tools, such as TOMTOM, which
 compares one motif to a series of several motifs to identify possible matches,
-produce an additional layer of complexity such that input matrices (which
+produce an additional layer of information such that input matrices (which
 contain metadata as previously described) can have a one-to-many relationship
 with other motif matrices (again with their own metadata) [@Gupta2007]. Thus an ideal
 representation for these data is one that can hold an unlimited number of motif
-matrices and their metadata, contain complex hierarchies, and be easily
+matrices and their metadata, retain heirarchical relationships, and be easily
 manipulated using standard analysis tools. 
 
 The `universalmotif_df` data structure is a powerful R/Bioconductor
@@ -226,7 +230,7 @@ a list is used as input to a `memes` function, it runs the corresponding MEME
 Suite tool for each object in the list. Users can also pass the name(s) of a
 category to the `control` argument to enable differential analysis of the
 remaining list members against the control category sequences. In this manner,
-`memes` enables complex data-aware differential motif analysis workflows using
+`memes` enables data-aware differential motif analysis workflows using
 simple syntax to extend the capabilities of the MEME Suite.
 
 ## Data visualization {-}
@@ -297,7 +301,7 @@ change in chromatin accessibility observed before and after E93 binding. These
 data are an emblematic example of range-based genomic data (E93 ChIP peaks)
 containing additional groupings (the chromatin accessibility response following
 DNA binding) whose membership may be influenced by differential motif content.
-We show how `memes` syntax allows complex analysis designs, how `memes`
+We show how `memes` syntax allows sophisticated analysis designs, how `memes`
 utilities enable deep interrogation of results, and how `memes` flexible data
 structures empower users to integrate the `memes` workflow with tools offered by
 other R/Bioconductor packages.
